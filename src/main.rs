@@ -1,14 +1,18 @@
 #[macro_use]
 extern crate glium;
+extern crate rand;
 
 fn main() {
     use glium::{glutin, Surface};
+    use rand::Rng;
 
+	let mut rng = rand::thread_rng();
     let mut events_loop = glium::glutin::EventsLoop::new();
     let window = glium::glutin::WindowBuilder::new();
     let context = glium::glutin::ContextBuilder::new();
     let display = glium::Display::new(window, context, &events_loop).unwrap();
     let mut t : f32 = 0.0;
+    let screen_size = display.get_framebuffer_dimensions();
 
     let mut closed = false;
 
@@ -31,6 +35,7 @@ fn main() {
 	    in vec2 position;
 
 	    out vec4 fragColor;
+	    out float random;
 
 	    void main() {
 	        gl_Position = vec4(position, 0.0, 1.0);
@@ -42,20 +47,28 @@ fn main() {
 
 	    out vec4 color;
 	    in vec4 fragColor;
+	    uniform float random;
 
 	    uniform float t;
+	    uniform vec2 screenSize;
 
 	    void main() {
-	        color = vec4(t, gl_FragCoord.x / 1000, 1.0, 1.0);
+	    	vec2 center = screenSize / 2;
+	    	center.x += sin(t * 25) * (screenSize.x / 2);
+	    	center.y += sin(t * 100) * (screenSize.y / 2);
+
+	    	float dist = distance(gl_FragCoord.xy, center);
+
+	        color = vec4(random, dist / (screenSize.x / 2.0), dist / (screenSize.y / 2.0), 1.0);
 	    }
 	"#;
 	let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
 
     while !closed {
         let mut target = display.draw();
-        t += 0.001;
+        t += 0.0001;
         target.clear_color(0.1, 0.25, 0.2, 1.0);
-        target.draw(&vertex_buffer, &indices, &program, &uniform! { t: t },
+        target.draw(&vertex_buffer, &indices, &program, &uniform! { t: t, screenSize: (screen_size.0 as f32, screen_size.1 as f32), random: rng.gen::<f32>() },
             &Default::default()).unwrap();
         target.finish().unwrap();
 
@@ -78,5 +91,5 @@ fn main() {
 #[derive(Copy, Clone)]
 struct Vertex {
     position: [f32; 2],
-    color: [f32; 4]
+    color: [f32; 4],
 }

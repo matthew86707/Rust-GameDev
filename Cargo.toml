@@ -5,3 +5,4 @@ authors = ["Lucas Baizer"]
 
 [dependencies]
 glium = "*"
+rand = "0.3"
