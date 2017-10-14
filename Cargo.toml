@@ -6,3 +6,4 @@ authors = ["Lucas Baizer"]
 [dependencies]
 glium = "*"
 image = "*"
+nalgebra = "*"
