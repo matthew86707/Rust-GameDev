@@ -4,6 +4,8 @@ version = "0.1.0"
 authors = ["Lucas Baizer"]
 
 [dependencies]
-glium = "*"
+glium = "0.17.1"
 image = "*"
 nalgebra = "*"
+obj-rs = { version = "0.4", features = ["glium-support"] }
+ndarray = "*"
