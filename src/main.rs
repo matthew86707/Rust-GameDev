@@ -2,12 +2,6 @@
 extern crate glium;
 extern crate image;
 extern crate nalgebra;
-extern crate rand;
-extern crate alga;
-
-use rand::distributions::{IndependentSample, Range};
-use rand::ThreadRng;
-use rand::Rng;
 
 const NEAR_PLANE: f32 = 0.001;
 const FAR_PLANE : f32 = 1000.0;
@@ -35,15 +29,8 @@ impl GameObject{
             transform : [[0.0, 0.0, 0.0, 0.0],[0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]]
         }
     }
-    pub fn translateRandom(&mut self){
-        let mut x : f32 = rand::thread_rng().gen_range(-2.0, 2.0);
-        let mut y : f32 = rand::thread_rng().gen_range(-2.0, 2.0);
-        let mut z : f32 = rand::thread_rng().gen_range(-2.0, 2.0);
-        println!("Translating : {}", x);
-        self.translate(x, y, z);
-    }
     pub fn recalculateMatrix(&mut self){
-        let transform = self.rotation_matrix * self.scale_matrix * self.translation_matrix;
+        let transform = self.translation_matrix * self.rotation_matrix * self.scale_matrix;
         self.transform = transform.into();
     }
     pub fn translate(&mut self, dx : f32, dy : f32, dz : f32){
@@ -55,12 +42,9 @@ impl GameObject{
 
 fn main() {
 
-    use alga::general::Inverse;
-
     let mut GameObjects : Vec<GameObject> = Vec::new();
 
     use glium::{glutin, Surface};
-
 
     let mut translation: nalgebra::Vector3<f32> = nalgebra::Vector3::new(0.0, 0.0, 0.0);
     let mut rotation_z: f32 = 0.0;
@@ -113,7 +97,7 @@ fn main() {
 
 	let program = glium::Program::from_source(&display, &vertex_shader_src, &fragment_shader_src, None).unwrap();
 
-    let projection_matrix: nalgebra::Matrix4<f32> = create_projection_matrix(100.0, screen_size);
+    let projection_matrix: nalgebra::Matrix4<f32> = create_projection_matrix(85.0, screen_size);
 
     let mut testObject : GameObject = GameObject::new(Shape::Plane);
 
@@ -122,35 +106,27 @@ fn main() {
     let mut dx : f64 = 0.0;
     let mut dy : f64 = 0.0;
 
-    for i in 1..10{
-        let mut toSpawn : GameObject = GameObject::new(Shape::Plane);
-        toSpawn.translateRandom();
-        GameObjects.push(toSpawn);
-    }
-    use nalgebra::Rotation3;
     while !closed {
         let mut target = display.draw();
         target.clear_color(0.0, 0.0, 0.0, 1.0);
-        let mut pitch : f32 = 0.0;
-        pitch += 0.005;
+
         let mut translation_matrix: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
-        let mut rotation_matrix: Rotation3<f32> = Rotation3::from_euler_angles(0.0, pitch, 0.0);
+        let mut rotation_matrix: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
         let mut scale_matrix: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 
         translation_matrix[(0, 3)] = translation[0];
         translation_matrix[(1, 3)] = translation[1];
         translation_matrix[(2, 3)] = translation[2];
-        //rotation_matrix[(0, 0)] = f32::cos(rotation_z);
-        //rotation_matrix[(2, 0)] = f32::sin(rotation_z);
-        //rotation_matrix[(0, 2)] = -f32::sin(rotation_z);
-        //rotation_matrix[(2, 2)] = f32::cos(rotation_z);
+        rotation_matrix[(0, 0)] = f32::cos(rotation_z);
+        rotation_matrix[(2, 0)] = f32::sin(rotation_z);
+        rotation_matrix[(0, 2)] = -f32::sin(rotation_z);
+        rotation_matrix[(2, 2)] = f32::cos(rotation_z);
 
-        //scale_matrix[(0, 0)] = scale[0];
-        //scale_matrix[(1, 1)] = scale[1];
-        //scale_matrix[(2, 2)] = scale[2];
+        scale_matrix[(0, 0)] = scale[0];
+        scale_matrix[(1, 1)] = scale[1];
+        scale_matrix[(2, 2)] = scale[2];
 
-        let mut transform = rotation_matrix.to_homogeneous() * scale_matrix * translation_matrix;
-        //transform.inverse_mut();
+        let transform = translation_matrix * rotation_matrix * scale_matrix;
         let transform: [[f32; 4]; 4] = transform.into();
         let projection_matrix: [[f32; 4]; 4] = projection_matrix.into();
         for gameObject in &mut GameObjects{
@@ -174,8 +150,8 @@ fn main() {
                     dy = my - position.1;
                     mx = position.0;
                     my = position.1;
-                    rotation_z += (dx as f32) * (0.02);
-                    rotation_y += (dy as f32) * (0.02);
+                    rotation_z += (dx as f32) * (0.05);
+                    rotation_y += (dy as f32) * (0.05);
                 },
                 	glutin::WindowEvent::Closed => closed = true,
                 	glutin::WindowEvent::KeyboardInput { input, .. } => match input.virtual_keycode {
