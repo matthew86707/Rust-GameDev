@@ -35,8 +35,6 @@ impl<'a> GameObject<'a>{
         }
     }
     pub fn regenTerrain(&mut self,  vertex_buffer : &'a glium::VertexBuffer<Vertex>){
-        use PrimitiveShapes;
-        let shape_terrain = PrimitiveShapes::get_plane(16, 16);
         self.vertex_buffer = vertex_buffer;
     }
     pub fn recalculateMatrix(&mut self){

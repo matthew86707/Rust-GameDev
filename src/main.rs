@@ -21,17 +21,21 @@ use GameObject::GameObject;
     let mut programCounter : f32 = 0.0;
     let mut glowEffectMultiplier : f32 = 0.0;
 
-    let mut terrain_vb : &glium::VertexBuffer<Vertex>;
+    let mut events_loop = glium::glutin::EventsLoop::new();
+    let window = glium::glutin::WindowBuilder::new();
+    let context = glium::glutin::ContextBuilder::new();
+    let display = glium::Display::new(window, context, &events_loop).unwrap();
+
+    let mut terrain_vb : glium::VertexBuffer<Vertex> = glium::VertexBuffer::new(&display, &PrimitiveShapes::get_plane(16, 16)).unwrap();
+
+    {
 
     let mut translation: nalgebra::Vector3<f32> = nalgebra::Vector3::new(0.0, 0.0, 0.0);
     let mut rotation_z: f32 = 0.0;
     let mut rotation_y: f32 = 0.0;
     let mut scale: nalgebra::Vector3<f32> = nalgebra::Vector3::new(1.0, 1.0, 1.0);
 
-    let mut events_loop = glium::glutin::EventsLoop::new();
-    let window = glium::glutin::WindowBuilder::new();
-    let context = glium::glutin::ContextBuilder::new();
-    let display = glium::Display::new(window, context, &events_loop).unwrap();
+    
 
     let screen_size = display.get_framebuffer_dimensions();
 
@@ -271,7 +275,7 @@ use GameObject::GameObject;
                         glium::uniforms::MagnifySamplerFilter::Linear);
 
          let mut target = display.draw();
-        target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
+        target.clear_color_and_depth((0.25, 0.45, 1.0, 1.0), 1.0);
 
         let projection_matrix: [[f32; 4]; 4] = projection_matrix.into();
 
@@ -352,15 +356,12 @@ use GameObject::GameObject;
                         }},
                         Some(glutin::VirtualKeyCode::P) => {shouldSpawn = true;},
                         Some(glutin::VirtualKeyCode::O) => {shouldSpawn = true;},
-                        //Some(glutin::VirtualKeyCode::R) => {
-                        //    match SelectedGameObjects.get_mut(0){
-                        //        Some(obj) => {
-                        //            terrain_shape = PrimitiveShapes::get_plane(16, 16);
-                        //            terrain_vb = &glium::VertexBuffer::new(&display, &terrain_shape).unwrap();
-                        //            obj.regenTerrain(terrain_vb)},
-                        //        _ => ()
-                        //    }
-                        //},
+                        Some(glutin::VirtualKeyCode::R) => {
+
+                                   //terrain_vb = glium::VertexBuffer::new(&display, &PrimitiveShapes::get_plane(16, 16)).unwrap();
+                                   //SelectedGameObjects.get_mut(0).unwrap().regenTerrain(&terrain_vb);
+                                
+                        },
                         Some(glutin::VirtualKeyCode::Return) => {
                             let mut left_over : Vec<GameObject> = SelectedGameObjects.drain(0..).collect();
                             GameObjects.extend(left_over);
@@ -383,9 +384,11 @@ use GameObject::GameObject;
                 	_ => ()
                 },
                 _ => ()
-            }
+            
+        }
         });
     }
+}
    // UIElements.clear();
     //drop(texture_ui);
    // drop(UIElements.get_mut(0));

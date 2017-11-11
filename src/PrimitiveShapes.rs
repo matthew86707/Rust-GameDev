@@ -23,12 +23,40 @@ pub fn get_plane(sizeX : i32, sizeY : i32) -> Vec<Vertex> {
 		}
 		height_map.push(row);
 	}
+	//println!("{:?}", height_map);
+
+	let smoothing_scale_factor : i32 = 4;
+
+
+	//let mut height_map = Vec::new();
+    
+	//for i in 0..sizeX * smoothing_scale_factor{
+	//	let mut row : Vec<f32> = Vec::new();
+	//	for j in 0..sizeY * smoothing_scale_factor{
+	//		let mut n : f32 = 0.0;
+	//		if(i % smoothing_scale_factor == 0 && j % smoothing_scale_factor == 0){
+	//			n = (match height_map_raw.get(i as usize){
+	//				Some(x) => {match x.get(i as usize){
+	//					Some(y) => y,
+	//					None => {let f = 0.0; &f}
+	//				},
+	//				None => {let z = 0.0; &z}
+	//			}
+	//			})
+				//n = 1.0;
+	//		}
+   	//		row.push(n);
+	//	}
+	//	height_map.push(row);
+	//}
+
 	println!("{:?}", height_map);
+
 	//sm = scale multiplier
 	let sm : f32 = 1.0;
 	let vs : f32 = 3.0;
-	for i in 0..sizeX{
-		for j in 0..sizeY{
+	for i in 0..smoothing_scale_factor{
+		for j in 0..smoothing_scale_factor{
 			let blank : f32 = 0.0;
 			let blank_ref : &f32 = &blank;
 			let lu : &f32 = (match height_map.get((i) as usize){Some(v) => {match v.get((j) as usize) { Some(n) => n, _ => blank_ref}}, _ => blank_ref});
