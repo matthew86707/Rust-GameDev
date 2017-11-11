@@ -2,16 +2,14 @@
 
 in vec2 fragment_uv;
 out vec4 color;
-
+uniform float glowEffect;
 uniform sampler2D sampler;
+uniform sampler2D rockSampler;
 uniform float value;
 uniform vec2 screen_size;
+in vec4 positionCoord;
 
 void main() {
-	//vec2 uv = gl_FragCoord.xy / screen_size;
-	//vec2 uv;
-	//uv.x = sin(gl_FragCoord.x / screen_size.x) / 2 + fragment_uv.x;
-	//uv.y = sin(gl_FragCoord.y / screen_size.y) / 2 + fragment_uv.y;
-	
-    color = texture(sampler, fragment_uv);
+	vec4 mixedTex = mix(texture(sampler, fragment_uv), texture(rockSampler, fragment_uv), clamp((3-positionCoord.y + 1) / 3.0, 0.0, 1.0));
+    color = mixedTex * vec4(glowEffect, glowEffect, glowEffect, 1.0);
 }

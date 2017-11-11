@@ -2,49 +2,26 @@
 extern crate glium;
 extern crate image;
 extern crate nalgebra;
+extern crate rand;
 
-const NEAR_PLANE: f32 = 0.001;
-const FAR_PLANE : f32 = 1000.0;
-
-enum Shape{
-    Plane,
-    Cube,
-    Sphere(i32, i32),
-    Model
-}
-
-struct GameObject{
-    translation_matrix: nalgebra::Matrix4<f32>,
-    rotation_matrix: nalgebra::Matrix4<f32>,
-    scale_matrix: nalgebra::Matrix4<f32>,
-    transform : [[f32; 4]; 4]
-}
-
-impl GameObject{
-    pub fn new(model : Shape) -> GameObject{
-        GameObject{
-            translation_matrix : nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0),
-            rotation_matrix : nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0),
-            scale_matrix : nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0),
-            transform : [[0.0, 0.0, 0.0, 0.0],[0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]]
-        }
-    }
-    pub fn recalculateMatrix(&mut self){
-        let transform = self.translation_matrix * self.rotation_matrix * self.scale_matrix;
-        self.transform = transform.into();
-    }
-    pub fn translate(&mut self, dx : f32, dy : f32, dz : f32){
-        self.translation_matrix[(0, 3)] += dx;
-        self.translation_matrix[(1, 3)] += dy;
-        self.translation_matrix[(2, 3)] += dz;
-    }
-}
+mod GameObject;
+mod Camera;
+mod PrimitiveShapes;
+mod UIElement;
 
 fn main() {
 
-    let mut GameObjects : Vec<GameObject> = Vec::new();
+use glium::{glutin, Surface};
+use UIElement::UIElement;
+use PrimitiveShapes::Vertex;
+use GameObject::Shape;
+use GameObject::GameObject;
 
-    use glium::{glutin, Surface};
+  
+    let mut programCounter : f32 = 0.0;
+    let mut glowEffectMultiplier : f32 = 0.0;
+
+    let mut terrain_vb : &glium::VertexBuffer<Vertex>;
 
     let mut translation: nalgebra::Vector3<f32> = nalgebra::Vector3::new(0.0, 0.0, 0.0);
     let mut rotation_z: f32 = 0.0;
@@ -64,27 +41,43 @@ fn main() {
 	use std::fs::File;
 	use std::io::prelude::*;
 
-    let mut bytes: Vec<u8> = Vec::new();
-    let mut file = File::open("rust_logo.jpg").expect("file not found");
-    file.read_to_end(&mut bytes).expect("something went wrong reading the file");
+    let vertex1 = Vertex { position: [-100.0, -100.0, -2.0], uv: [ 0.0, 1.0 ] };
+    let vertex2 = Vertex { position: [ 100.0, -100.0, -2.0], uv: [ 1.0, 1.0 ] };
+    let vertex3 = Vertex { position: [ -100.0, 100.0, -2.0], uv: [ 0.0, 0.0 ] };
 
-	let image = image::load(Cursor::new(&bytes), image::JPEG).unwrap().to_rgba();
-	let image_dimensions = image.dimensions();
-	let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw()[..], image_dimensions);
-	let texture = glium::texture::Texture2d::new(&display, image).unwrap();
+    let vertex4 = Vertex { position: [100.0, 100.0, -2.0], uv: [ 1.0, 0.0] };
+    let vertex5 = Vertex { position: [ -100.0, 100.0, -2.0], uv: [ 0.0, 0.0] };
+    let vertex6 = Vertex { position: [ 100.0, -100.0, -2.0], uv: [ 1.0, 1.0 ] };
+    let shape = vec![vertex1, vertex2, vertex3, vertex4, vertex5, vertex6];
+
+    let vertex_buffer_back = glium::VertexBuffer::new(&display, &shape).unwrap();
+
+    let vertex1 = Vertex { position: [100.0, -100.0, -2.0], uv: [ 0.0, 1.0 ] };
+    let vertex2 = Vertex { position: [ -100.0, -100.0, -2.0], uv: [ 1.0, 1.0 ] };
+    let vertex3 = Vertex { position: [ 100.0, 100.0, -2.0], uv: [ 0.0, 0.0 ] };
+
+    let vertex4 = Vertex { position: [-100.0, 100.0, -2.0], uv: [ 1.0, 0.0] };
+    let vertex5 = Vertex { position: [ 100.0, 100.0, -2.0], uv: [ 0.0, 0.0] };
+    let vertex6 = Vertex { position: [ -100.0, -100.0, -2.0], uv: [ 1.0, 1.0 ] };
+    let shape = vec![vertex1, vertex2, vertex3, vertex4, vertex5, vertex6];
+
+    let vertex_buffer_front = glium::VertexBuffer::new(&display, &shape).unwrap();
+    
+
+	let texture = load_texture("grass.jpg", &display);
+
+    //let texture_ui = load_texture("loading_screen.jpg", &display);
+
+    let texture_rock = load_texture("rock.jpg", &display);
 
 	implement_vertex!(Vertex, position, uv);
-	let vertex1 = Vertex { position: [-1.0, -1.0, -2.0], uv: [ 0.0, 1.0 ] };
-	let vertex2 = Vertex { position: [ 1.0, -1.0, -2.0], uv: [ 1.0, 1.0 ] };
-	let vertex3 = Vertex { position: [ -1.0, 1.0, -2.0], uv: [ 0.0, 0.0 ] };
 
-	let vertex4 = Vertex { position: [1.0, 1.0, -2.0], uv: [ 1.0, 0.0] };
-	let vertex5 = Vertex { position: [ -1.0, 1.0, -2.0], uv: [ 0.0, 0.0] };
-	let vertex6 = Vertex { position: [ 1.0, -1.0, -2.0], uv: [ 1.0, 1.0 ] };
-	let shape = vec![vertex1, vertex2, vertex3, vertex4, vertex5, vertex6];
+	let shape_terrain = PrimitiveShapes::get_plane(64, 64);
 
-	let vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
+	let vertex_buffer_terrain = glium::VertexBuffer::new(&display, &shape_terrain).unwrap();
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
+
+
 
 	let mut vertex_shader_src = String::new();
 	let mut fragment_shader_src = String::new();
@@ -97,44 +90,227 @@ fn main() {
 
 	let program = glium::Program::from_source(&display, &vertex_shader_src, &fragment_shader_src, None).unwrap();
 
-    let projection_matrix: nalgebra::Matrix4<f32> = create_projection_matrix(85.0, screen_size);
 
-    let mut testObject : GameObject = GameObject::new(Shape::Plane);
+
+
+
+    let mut vertex_shader_src_UI = String::new();
+    let mut fragment_shader_src_UI = String::new();
+
+    let mut file = File::open("shaders/vertex_ui.glsl").expect("file not found");
+    file.read_to_string(&mut vertex_shader_src_UI).expect("something went wrong reading the file");
+
+    let mut file = File::open("shaders/fragment_ui.glsl").expect("file not found");
+    file.read_to_string(&mut fragment_shader_src_UI).expect("something went wrong reading the file");
+
+    let program_UI = glium::Program::from_source(&display, &vertex_shader_src_UI, &fragment_shader_src_UI, None).unwrap();
+
+
+
+
+
+    let mut mainCam : Camera::Camera = Camera::Camera::new();
+
+    let projection_matrix: nalgebra::Matrix4<f32> = mainCam.create_projection_matrix(95.0, screen_size);
+
+
+
+    let tex_posx = load_texture("skybox/TropicalSunnyDayBack2048.jpg", &display);
+    let tex_negx = load_texture("skybox/TropicalSunnyDayFront2048.jpg", &display);
+    let tex_posy = load_texture("skybox/TropicalSunnyDayUp2048.jpg", &display);
+    let tex_negy = load_texture("skybox/TropicalSunnyDayDown2048.jpg", &display);
+    let tex_posz = load_texture("skybox/TropicalSunnyDayLeft2048.jpg", &display);
+    let tex_negz = load_texture("skybox/TropicalSunnyDayRight2048.jpg", &display);
+
+    let cubemap = glium::texture::Cubemap::empty(&display, 2048).unwrap();
+
+    let mut vertex_shader_src_sky = String::new();
+    let mut fragment_shader_src_sky = String::new();
+
+    let mut file = File::open("shaders/vertex_skybox.glsl").expect("file not found");
+    file.read_to_string(&mut vertex_shader_src_sky).expect("something went wrong reading the file");
+
+    let mut file = File::open("shaders/fragment_skybox.glsl").expect("file not found");
+    file.read_to_string(&mut fragment_shader_src_sky).expect("something went wrong reading the file");
+
+    let program_skybox = glium::Program::from_source(&display, &vertex_shader_src_sky, &fragment_shader_src_sky, None).unwrap();
+
+     let skybox_vertex_buffer = {
+        #[derive(Copy, Clone)]
+        struct Vertex {
+            position: [f32; 3],
+        }
+
+        implement_vertex!(Vertex, position);
+
+        let side2: f32 = 50.0 / 2.0;
+
+        glium::VertexBuffer::new(&display,
+            &[
+                // Front
+            Vertex { position: [-side2, -side2,  side2] },
+            Vertex { position: [ side2, -side2,  side2] },
+            Vertex { position: [ side2,  side2,  side2] },
+                Vertex { position: [-side2,  side2,  side2] },
+            // Right
+            Vertex { position: [ side2, -side2,  side2] },
+            Vertex { position: [ side2, -side2, -side2] },
+            Vertex { position: [ side2,  side2, -side2] },
+                Vertex { position: [ side2,  side2,  side2] },
+            // Back
+            Vertex { position: [-side2, -side2, -side2] },
+            Vertex { position: [-side2,  side2, -side2] },
+            Vertex { position: [ side2,  side2, -side2] },
+                Vertex { position: [ side2, -side2, -side2] },
+            // Left
+            Vertex { position: [-side2, -side2,  side2] },
+            Vertex { position: [-side2,  side2,  side2] },
+                Vertex { position: [-side2,  side2, -side2] },
+                Vertex { position: [-side2, -side2, -side2] },
+                // Bottom
+            Vertex { position: [-side2, -side2,  side2] },
+            Vertex { position: [-side2, -side2, -side2] },
+            Vertex { position: [ side2, -side2, -side2] },
+                Vertex { position: [ side2, -side2,  side2] },
+            // Top
+                Vertex { position: [-side2,  side2,  side2] },
+            Vertex { position: [ side2,  side2,  side2] },
+            Vertex { position: [ side2,  side2, -side2] },
+                Vertex { position: [-side2,  side2, -side2] },
+            ]
+        ).unwrap()
+    };
+
+     let skybox_index_buffer = glium::IndexBuffer::new(&display,
+            glium::index::PrimitiveType::TrianglesList,
+            &[
+                // Front
+                0u16, 2, 1, 0, 3, 2,
+                // Right
+                4, 6, 5, 4, 7, 6,
+                // Back
+                8, 10, 9, 8, 11, 10,
+                // Left
+                12, 14, 13, 12, 15, 14,
+                // Bottom
+                16, 18, 17, 16, 19, 18,
+                // Top
+                20, 22, 21, 20, 23, 22,
+     ]).unwrap();
+
+
+    let dest_rect1 = glium::BlitTarget {
+        left: 0,
+        bottom: 0,
+        width: 2048,
+        height: 2048,
+    };
+
+    let scale: f32 = 1.0;
+    let scale2: f32 = 1.0;
+    let mut t: f32 = 0.0;
+
+
+
+   
+
+    {
+     let mut SelectedGameObjects : Vec<GameObject> = Vec::new();
+    let mut GameObjects : Vec<GameObject> = Vec::new();
+
+    let mut testObject : GameObject = GameObject::new(Shape::Plane, &texture, &program, &vertex_buffer_terrain);
 
     let mut mx : f64 = 0.0;
     let mut my : f64 = 0.0;
     let mut dx : f64 = 0.0;
     let mut dy : f64 = 0.0;
 
+    let mut draw_params : glium::draw_parameters::DrawParameters = Default::default();
+    draw_params.polygon_mode = glium::draw_parameters::PolygonMode::Fill;
+    draw_params.blend =  glium::Blend::alpha_blending();
+    draw_params.depth = glium::Depth {
+         test: glium::draw_parameters::DepthTest::IfLess,
+               write: true,
+                .. Default::default()
+   };
+
+   let mut shouldSpawn : bool = false;
+
     while !closed {
-        let mut target = display.draw();
-        target.clear_color(0.0, 0.0, 0.0, 1.0);
+        programCounter += 0.0025;
+        glowEffectMultiplier = (1.57 + f32::sin(programCounter) / 2.0);
 
-        let mut translation_matrix: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
-        let mut rotation_matrix: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
-        let mut scale_matrix: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 
-        translation_matrix[(0, 3)] = translation[0];
-        translation_matrix[(1, 3)] = translation[1];
-        translation_matrix[(2, 3)] = translation[2];
-        rotation_matrix[(0, 0)] = f32::cos(rotation_z);
-        rotation_matrix[(2, 0)] = f32::sin(rotation_z);
-        rotation_matrix[(0, 2)] = -f32::sin(rotation_z);
-        rotation_matrix[(2, 2)] = f32::cos(rotation_z);
 
-        scale_matrix[(0, 0)] = scale[0];
-        scale_matrix[(1, 1)] = scale[1];
-        scale_matrix[(2, 2)] = scale[2];
+        //Draw skybox to framebuffers
 
-        let transform = translation_matrix * rotation_matrix * scale_matrix;
-        let transform: [[f32; 4]; 4] = transform.into();
+        let  framebuffer1 = glium::framebuffer::SimpleFrameBuffer::new(&display,
+                        cubemap.main_level().image(glium::texture::CubeLayer::PositiveX)).unwrap();
+        let  framebuffer2 = glium::framebuffer::SimpleFrameBuffer::new(&display,
+                        cubemap.main_level().image(glium::texture::CubeLayer::NegativeX)).unwrap();
+        let  framebuffer3 = glium::framebuffer::SimpleFrameBuffer::new(&display,
+                        cubemap.main_level().image(glium::texture::CubeLayer::PositiveY)).unwrap();
+        let  framebuffer4 = glium::framebuffer::SimpleFrameBuffer::new(&display,
+                        cubemap.main_level().image(glium::texture::CubeLayer::NegativeY)).unwrap();
+        let  framebuffer5 = glium::framebuffer::SimpleFrameBuffer::new(&display,
+                        cubemap.main_level().image(glium::texture::CubeLayer::PositiveZ)).unwrap();
+        let  framebuffer6 = glium::framebuffer::SimpleFrameBuffer::new(&display,
+                        cubemap.main_level().image(glium::texture::CubeLayer::NegativeZ)).unwrap();
+
+        tex_posx.as_surface().blit_whole_color_to(&framebuffer1, &dest_rect1,
+                        glium::uniforms::MagnifySamplerFilter::Linear);
+        tex_negx.as_surface().blit_whole_color_to(&framebuffer2, &dest_rect1,
+                        glium::uniforms::MagnifySamplerFilter::Linear);
+        tex_negy.as_surface().blit_whole_color_to(&framebuffer3, &dest_rect1,
+                        glium::uniforms::MagnifySamplerFilter::Linear);
+        tex_posy.as_surface().blit_whole_color_to(&framebuffer4, &dest_rect1,
+                        glium::uniforms::MagnifySamplerFilter::Linear);
+        tex_posz.as_surface().blit_whole_color_to(&framebuffer5, &dest_rect1,
+                        glium::uniforms::MagnifySamplerFilter::Linear);
+        tex_negz.as_surface().blit_whole_color_to(&framebuffer6, &dest_rect1,
+                        glium::uniforms::MagnifySamplerFilter::Linear);
+
+         let mut target = display.draw();
+        target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
+
         let projection_matrix: [[f32; 4]; 4] = projection_matrix.into();
+
+        let skybox_uniforms = uniform! {
+             projection: projection_matrix,
+             view: mainCam.get_view_matrix(),
+             cubetex: cubemap.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Linear),
+        };
+
+       
+
+        target.draw(&skybox_vertex_buffer, &skybox_index_buffer, &program_skybox,
+            &skybox_uniforms, &draw_params).unwrap();
+
+        if shouldSpawn {
+            SelectedGameObjects.push(GameObject::new(Shape::Plane, &texture, &program, &vertex_buffer_terrain));
+            shouldSpawn = false;
+        }
+
+        
         for gameObject in &mut GameObjects{
             gameObject.recalculateMatrix();
-            target.draw(&vertex_buffer, &indices, &program, &uniform! { sampler: &texture, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : transform },
-            &Default::default()).unwrap();
+            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! { sampler: gameObject.texture, rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(), glowEffect : 1.0 as f32},
+            &draw_params).unwrap();
+
         }
-        
+
+        for gameObject in &mut SelectedGameObjects{
+            gameObject.recalculateMatrix();
+            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! { sampler: gameObject.texture ,rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(), glowEffect : glowEffectMultiplier},
+            &draw_params).unwrap();
+        }
+
+       //  for ui_element in &mut UIElements{
+       //     ui_element.recalculateMatrix();
+       //     target.draw(&vertex_buffer, &indices, &program_UI, &uniform! { sampler: ui_element.texture, transform: ui_element.transform},
+       //     &draw_params).unwrap();
+       //
+       // }
         
         
         target.finish().unwrap();
@@ -151,21 +327,57 @@ fn main() {
                     mx = position.0;
                     my = position.1;
                     rotation_z += (dx as f32) * (0.05);
+                    mainCam.rotate(nalgebra::Vector3::new(0.0, 0.0, dx as f32 / 3.0));
                     rotation_y += (dy as f32) * (0.05);
+                    mainCam.rotate(nalgebra::Vector3::new(0.0, -(dy as f32 / 3.0), 0.0));
                 },
                 	glutin::WindowEvent::Closed => closed = true,
                 	glutin::WindowEvent::KeyboardInput { input, .. } => match input.virtual_keycode {
                 		Some(glutin::VirtualKeyCode::Escape) => closed = true,
-                        Some(glutin::VirtualKeyCode::N) => {GameObjects.push(GameObject::new(Shape::Plane))}
-                        Some(glutin::VirtualKeyCode::Left) => {},
-                		Some(glutin::VirtualKeyCode::Left) => {},
-                		Some(glutin::VirtualKeyCode::Right) => translation[0] += 0.1,
-                		Some(glutin::VirtualKeyCode::Up) => translation[1] += 0.1,
-                		Some(glutin::VirtualKeyCode::Down) => translation[1] -= 0.1,
-                        Some(glutin::VirtualKeyCode::Space) => { scale[0] += 0.1; scale[1] += 0.1; },
-                        Some(glutin::VirtualKeyCode::C) => { scale[0] -= 0.1; scale[1] -= 0.1; },
-                        Some(glutin::VirtualKeyCode::A) => rotation_z += 0.1,
-                        Some(glutin::VirtualKeyCode::D) => rotation_z -= 0.1,
+                        Some(glutin::VirtualKeyCode::Right) => {match SelectedGameObjects.get_mut(0) { 
+                            Some(mut obj) => obj.translate(-0.1, 0.0, 0.0),
+                            _ => ()
+                        }},
+                        Some(glutin::VirtualKeyCode::Left) => {match SelectedGameObjects.get_mut(0) { 
+                            Some(mut obj) => obj.translate(0.1, 0.0, 0.0),
+                            _ => ()
+                        }},
+                        Some(glutin::VirtualKeyCode::Up) => {match SelectedGameObjects.get_mut(0) { 
+                            Some(mut obj) => obj.translate(0.0, 0.0, -0.1),
+                            _ => ()
+                        }},
+                        Some(glutin::VirtualKeyCode::Down) => {match SelectedGameObjects.get_mut(0) { 
+                            Some(mut obj) => obj.translate(0.0, 0.0, 0.1),
+                            _ => ()
+                        }},
+                        Some(glutin::VirtualKeyCode::P) => {shouldSpawn = true;},
+                        Some(glutin::VirtualKeyCode::O) => {shouldSpawn = true;},
+                        //Some(glutin::VirtualKeyCode::R) => {
+                        //    match SelectedGameObjects.get_mut(0){
+                        //        Some(obj) => {
+                        //            terrain_shape = PrimitiveShapes::get_plane(16, 16);
+                        //            terrain_vb = &glium::VertexBuffer::new(&display, &terrain_shape).unwrap();
+                        //            obj.regenTerrain(terrain_vb)},
+                        //        _ => ()
+                        //    }
+                        //},
+                        Some(glutin::VirtualKeyCode::Return) => {
+                            let mut left_over : Vec<GameObject> = SelectedGameObjects.drain(0..).collect();
+                            GameObjects.extend(left_over);
+                        },
+                        Some(glutin::VirtualKeyCode::Z) => {
+                            if draw_params.polygon_mode == glium::draw_parameters::PolygonMode::Line{
+                                draw_params.polygon_mode = glium::draw_parameters::PolygonMode::Fill;
+                            }else{
+                                 draw_params.polygon_mode = glium::draw_parameters::PolygonMode::Line;
+                            }
+                        },
+                        Some(glutin::VirtualKeyCode::W) => mainCam.translate(nalgebra::Vector3::new(0.0, 0.0, 0.25)),
+                         Some(glutin::VirtualKeyCode::S) => mainCam.translate(nalgebra::Vector3::new(0.0, 0.0, -0.25)),
+                        Some(glutin::VirtualKeyCode::A) => mainCam.translate(nalgebra::Vector3::new(-0.25, 0.0, 0.0)),
+                        Some(glutin::VirtualKeyCode::D) => mainCam.translate(nalgebra::Vector3::new(0.25, 0.0, 0.0)),
+                        Some(glutin::VirtualKeyCode::Q) => mainCam.translate(nalgebra::Vector3::new(0.25, 0.25, 0.0)),
+                        Some(glutin::VirtualKeyCode::E) => mainCam.translate(nalgebra::Vector3::new(0.25, -0.25, 0.0)),
                 		_ => ()
                 	},
                 	_ => ()
@@ -174,27 +386,27 @@ fn main() {
             }
         });
     }
+   // UIElements.clear();
+    //drop(texture_ui);
+   // drop(UIElements.get_mut(0));
+}
 }
 
-fn create_projection_matrix(fov: f32, screen_size: (u32, u32)) -> nalgebra::Matrix4<f32> {
-    let aspect_ratio: f32 = screen_size.0 as f32 / screen_size.1 as f32;
-    let y_scale = (1.0 / f32::tan(f32::to_radians(fov / 2.0))) * aspect_ratio;
-    let x_scale = y_scale / aspect_ratio;
-    let frustum_length = FAR_PLANE - NEAR_PLANE;
+pub fn load_texture(location : &str, display : &glium::Display) -> glium::Texture2d{
+    use std::io::Cursor;
+    use std::fs::File;
+    use std::io::prelude::*;
 
-    let mut matrix: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
-    matrix[(0, 0)] = x_scale;
-    matrix[(1, 1)] = y_scale;
-    matrix[(2, 2)] = -((FAR_PLANE + NEAR_PLANE) / frustum_length);
-    matrix[(3, 2)] = -1.0;
-    matrix[(2, 3)] = -((2.0 * NEAR_PLANE * FAR_PLANE) / frustum_length);
-    matrix[(3, 3)] = 0.0;
+    let mut bytes_rock: Vec<u8> = Vec::new();
+    let mut file_rock = File::open(location).expect("file not found");
+    file_rock.read_to_end(&mut bytes_rock).expect("something went wrong reading the file");
 
-    matrix
+    
+    let image_rock = image::load(Cursor::new(&bytes_rock), image::JPEG).unwrap().to_rgba();
+    let image_dimensions_rock = image_rock.dimensions();
+    let image_rock = glium::texture::RawImage2d::from_raw_rgba_reversed(&image_rock.into_raw()[..], image_dimensions_rock);
+    let texture_rock = glium::texture::Texture2d::new(display, image_rock).unwrap();
+    return texture_rock;
 }
 
-#[derive(Copy, Clone)]
-struct Vertex {
-    position: [f32; 3],
-    uv: [f32; 2],
-}
+
