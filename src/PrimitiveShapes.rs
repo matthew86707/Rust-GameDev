@@ -54,9 +54,9 @@ pub fn get_plane(sizeX : i32, sizeY : i32) -> Vec<Vertex> {
 
 	//sm = scale multiplier
 	let sm : f32 = 1.0;
-	let vs : f32 = 3.0;
-	for i in 0..smoothing_scale_factor{
-		for j in 0..smoothing_scale_factor{
+	let vs : f32 = 4.5;
+	for i in 0..sizeX{
+		for j in 0..sizeY{
 			let blank : f32 = 0.0;
 			let blank_ref : &f32 = &blank;
 			let lu : &f32 = (match height_map.get((i) as usize){Some(v) => {match v.get((j) as usize) { Some(n) => n, _ => blank_ref}}, _ => blank_ref});

@@ -26,7 +26,7 @@ use GameObject::GameObject;
     let context = glium::glutin::ContextBuilder::new();
     let display = glium::Display::new(window, context, &events_loop).unwrap();
 
-    let mut terrain_vb : glium::VertexBuffer<Vertex> = glium::VertexBuffer::new(&display, &PrimitiveShapes::get_plane(16, 16)).unwrap();
+    //let mut terrain_vb : glium::VertexBuffer<Vertex> = glium::VertexBuffer::new(&display, &PrimitiveShapes::get_plane(256, 256)).unwrap();
 
     {
 
@@ -70,13 +70,15 @@ use GameObject::GameObject;
 
 	let texture = load_texture("grass.jpg", &display);
 
+    let snow_texture = load_texture("Snow.jpg", &display);
+
     //let texture_ui = load_texture("loading_screen.jpg", &display);
 
     let texture_rock = load_texture("rock.jpg", &display);
 
 	implement_vertex!(Vertex, position, uv);
 
-	let shape_terrain = PrimitiveShapes::get_plane(64, 64);
+	let shape_terrain = PrimitiveShapes::get_plane(256, 256);
 
 	let vertex_buffer_terrain = glium::VertexBuffer::new(&display, &shape_terrain).unwrap();
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
@@ -119,14 +121,14 @@ use GameObject::GameObject;
 
 
 
-    let tex_posx = load_texture("skybox/TropicalSunnyDayBack2048.jpg", &display);
-    let tex_negx = load_texture("skybox/TropicalSunnyDayFront2048.jpg", &display);
-    let tex_posy = load_texture("skybox/TropicalSunnyDayUp2048.jpg", &display);
-    let tex_negy = load_texture("skybox/TropicalSunnyDayDown2048.jpg", &display);
-    let tex_posz = load_texture("skybox/TropicalSunnyDayLeft2048.jpg", &display);
-    let tex_negz = load_texture("skybox/TropicalSunnyDayRight2048.jpg", &display);
+    //let tex_posx = load_texture("skybox/TropicalSunnyDayBack2048.jpg", &display);
+    //let tex_negx = load_texture("skybox/TropicalSunnyDayFront2048.jpg", &display);
+    //let tex_posy = load_texture("skybox/TropicalSunnyDayUp2048.jpg", &display);
+    //let tex_negy = load_texture("skybox/TropicalSunnyDayDown2048.jpg", &display);
+    //let tex_posz = load_texture("skybox/TropicalSunnyDayLeft2048.jpg", &display);
+    //let tex_negz = load_texture("skybox/TropicalSunnyDayRight2048.jpg", &display);
 
-    let cubemap = glium::texture::Cubemap::empty(&display, 2048).unwrap();
+    //let cubemap = glium::texture::Cubemap::empty(&display, 2048).unwrap();
 
     let mut vertex_shader_src_sky = String::new();
     let mut fragment_shader_src_sky = String::new();
@@ -139,68 +141,68 @@ use GameObject::GameObject;
 
     let program_skybox = glium::Program::from_source(&display, &vertex_shader_src_sky, &fragment_shader_src_sky, None).unwrap();
 
-     let skybox_vertex_buffer = {
-        #[derive(Copy, Clone)]
-        struct Vertex {
-            position: [f32; 3],
-        }
+    //  let skybox_vertex_buffer = {
+    //     #[derive(Copy, Clone)]
+    //     struct Vertex {
+    //         position: [f32; 3],
+    //     }
 
-        implement_vertex!(Vertex, position);
+    //     implement_vertex!(Vertex, position);
 
-        let side2: f32 = 50.0 / 2.0;
+    //     let side2: f32 = 50.0 / 2.0;
 
-        glium::VertexBuffer::new(&display,
-            &[
-                // Front
-            Vertex { position: [-side2, -side2,  side2] },
-            Vertex { position: [ side2, -side2,  side2] },
-            Vertex { position: [ side2,  side2,  side2] },
-                Vertex { position: [-side2,  side2,  side2] },
-            // Right
-            Vertex { position: [ side2, -side2,  side2] },
-            Vertex { position: [ side2, -side2, -side2] },
-            Vertex { position: [ side2,  side2, -side2] },
-                Vertex { position: [ side2,  side2,  side2] },
-            // Back
-            Vertex { position: [-side2, -side2, -side2] },
-            Vertex { position: [-side2,  side2, -side2] },
-            Vertex { position: [ side2,  side2, -side2] },
-                Vertex { position: [ side2, -side2, -side2] },
-            // Left
-            Vertex { position: [-side2, -side2,  side2] },
-            Vertex { position: [-side2,  side2,  side2] },
-                Vertex { position: [-side2,  side2, -side2] },
-                Vertex { position: [-side2, -side2, -side2] },
-                // Bottom
-            Vertex { position: [-side2, -side2,  side2] },
-            Vertex { position: [-side2, -side2, -side2] },
-            Vertex { position: [ side2, -side2, -side2] },
-                Vertex { position: [ side2, -side2,  side2] },
-            // Top
-                Vertex { position: [-side2,  side2,  side2] },
-            Vertex { position: [ side2,  side2,  side2] },
-            Vertex { position: [ side2,  side2, -side2] },
-                Vertex { position: [-side2,  side2, -side2] },
-            ]
-        ).unwrap()
-    };
+    //     glium::VertexBuffer::new(&display,
+    //         &[
+    //             // Front
+    //         Vertex { position: [-side2, -side2,  side2] },
+    //         Vertex { position: [ side2, -side2,  side2] },
+    //         Vertex { position: [ side2,  side2,  side2] },
+    //             Vertex { position: [-side2,  side2,  side2] },
+    //         // Right
+    //         Vertex { position: [ side2, -side2,  side2] },
+    //         Vertex { position: [ side2, -side2, -side2] },
+    //         Vertex { position: [ side2,  side2, -side2] },
+    //             Vertex { position: [ side2,  side2,  side2] },
+    //         // Back
+    //         Vertex { position: [-side2, -side2, -side2] },
+    //         Vertex { position: [-side2,  side2, -side2] },
+    //         Vertex { position: [ side2,  side2, -side2] },
+    //             Vertex { position: [ side2, -side2, -side2] },
+    //         // Left
+    //         Vertex { position: [-side2, -side2,  side2] },
+    //         Vertex { position: [-side2,  side2,  side2] },
+    //             Vertex { position: [-side2,  side2, -side2] },
+    //             Vertex { position: [-side2, -side2, -side2] },
+    //             // Bottom
+    //         Vertex { position: [-side2, -side2,  side2] },
+    //         Vertex { position: [-side2, -side2, -side2] },
+    //         Vertex { position: [ side2, -side2, -side2] },
+    //             Vertex { position: [ side2, -side2,  side2] },
+    //         // Top
+    //             Vertex { position: [-side2,  side2,  side2] },
+    //         Vertex { position: [ side2,  side2,  side2] },
+    //         Vertex { position: [ side2,  side2, -side2] },
+    //             Vertex { position: [-side2,  side2, -side2] },
+    //         ]
+    //     ).unwrap()
+    // };
 
-     let skybox_index_buffer = glium::IndexBuffer::new(&display,
-            glium::index::PrimitiveType::TrianglesList,
-            &[
-                // Front
-                0u16, 2, 1, 0, 3, 2,
-                // Right
-                4, 6, 5, 4, 7, 6,
-                // Back
-                8, 10, 9, 8, 11, 10,
-                // Left
-                12, 14, 13, 12, 15, 14,
-                // Bottom
-                16, 18, 17, 16, 19, 18,
-                // Top
-                20, 22, 21, 20, 23, 22,
-     ]).unwrap();
+     // let skybox_index_buffer = glium::IndexBuffer::new(&display,
+     //        glium::index::PrimitiveType::TrianglesList,
+     //        &[
+     //            // Front
+     //            0u16, 2, 1, 0, 3, 2,
+     //            // Right
+     //            4, 6, 5, 4, 7, 6,
+     //            // Back
+     //            8, 10, 9, 8, 11, 10,
+     //            // Left
+     //            12, 14, 13, 12, 15, 14,
+     //            // Bottom
+     //            16, 18, 17, 16, 19, 18,
+     //            // Top
+     //            20, 22, 21, 20, 23, 22,
+     // ]).unwrap();
 
 
     let dest_rect1 = glium::BlitTarget {
@@ -248,47 +250,47 @@ use GameObject::GameObject;
 
         //Draw skybox to framebuffers
 
-        let  framebuffer1 = glium::framebuffer::SimpleFrameBuffer::new(&display,
-                        cubemap.main_level().image(glium::texture::CubeLayer::PositiveX)).unwrap();
-        let  framebuffer2 = glium::framebuffer::SimpleFrameBuffer::new(&display,
-                        cubemap.main_level().image(glium::texture::CubeLayer::NegativeX)).unwrap();
-        let  framebuffer3 = glium::framebuffer::SimpleFrameBuffer::new(&display,
-                        cubemap.main_level().image(glium::texture::CubeLayer::PositiveY)).unwrap();
-        let  framebuffer4 = glium::framebuffer::SimpleFrameBuffer::new(&display,
-                        cubemap.main_level().image(glium::texture::CubeLayer::NegativeY)).unwrap();
-        let  framebuffer5 = glium::framebuffer::SimpleFrameBuffer::new(&display,
-                        cubemap.main_level().image(glium::texture::CubeLayer::PositiveZ)).unwrap();
-        let  framebuffer6 = glium::framebuffer::SimpleFrameBuffer::new(&display,
-                        cubemap.main_level().image(glium::texture::CubeLayer::NegativeZ)).unwrap();
+        // let  framebuffer1 = glium::framebuffer::SimpleFrameBuffer::new(&display,
+        //                 cubemap.main_level().image(glium::texture::CubeLayer::PositiveX)).unwrap();
+        // let  framebuffer2 = glium::framebuffer::SimpleFrameBuffer::new(&display,
+        //                 cubemap.main_level().image(glium::texture::CubeLayer::NegativeX)).unwrap();
+        // let  framebuffer3 = glium::framebuffer::SimpleFrameBuffer::new(&display,
+        //                 cubemap.main_level().image(glium::texture::CubeLayer::PositiveY)).unwrap();
+        // let  framebuffer4 = glium::framebuffer::SimpleFrameBuffer::new(&display,
+        //                 cubemap.main_level().image(glium::texture::CubeLayer::NegativeY)).unwrap();
+        // let  framebuffer5 = glium::framebuffer::SimpleFrameBuffer::new(&display,
+        //                 cubemap.main_level().image(glium::texture::CubeLayer::PositiveZ)).unwrap();
+        // let  framebuffer6 = glium::framebuffer::SimpleFrameBuffer::new(&display,
+        //                 cubemap.main_level().image(glium::texture::CubeLayer::NegativeZ)).unwrap();
 
-        tex_posx.as_surface().blit_whole_color_to(&framebuffer1, &dest_rect1,
-                        glium::uniforms::MagnifySamplerFilter::Linear);
-        tex_negx.as_surface().blit_whole_color_to(&framebuffer2, &dest_rect1,
-                        glium::uniforms::MagnifySamplerFilter::Linear);
-        tex_negy.as_surface().blit_whole_color_to(&framebuffer3, &dest_rect1,
-                        glium::uniforms::MagnifySamplerFilter::Linear);
-        tex_posy.as_surface().blit_whole_color_to(&framebuffer4, &dest_rect1,
-                        glium::uniforms::MagnifySamplerFilter::Linear);
-        tex_posz.as_surface().blit_whole_color_to(&framebuffer5, &dest_rect1,
-                        glium::uniforms::MagnifySamplerFilter::Linear);
-        tex_negz.as_surface().blit_whole_color_to(&framebuffer6, &dest_rect1,
-                        glium::uniforms::MagnifySamplerFilter::Linear);
+        // tex_posx.as_surface().blit_whole_color_to(&framebuffer1, &dest_rect1,
+        //                 glium::uniforms::MagnifySamplerFilter::Linear);
+        // tex_negx.as_surface().blit_whole_color_to(&framebuffer2, &dest_rect1,
+        //                 glium::uniforms::MagnifySamplerFilter::Linear);
+        // tex_negy.as_surface().blit_whole_color_to(&framebuffer3, &dest_rect1,
+        //                 glium::uniforms::MagnifySamplerFilter::Linear);
+        // tex_posy.as_surface().blit_whole_color_to(&framebuffer4, &dest_rect1,
+        //                 glium::uniforms::MagnifySamplerFilter::Linear);
+        // tex_posz.as_surface().blit_whole_color_to(&framebuffer5, &dest_rect1,
+        //                 glium::uniforms::MagnifySamplerFilter::Linear);
+        // tex_negz.as_surface().blit_whole_color_to(&framebuffer6, &dest_rect1,
+        //                 glium::uniforms::MagnifySamplerFilter::Linear);
 
          let mut target = display.draw();
         target.clear_color_and_depth((0.25, 0.45, 1.0, 1.0), 1.0);
 
         let projection_matrix: [[f32; 4]; 4] = projection_matrix.into();
 
-        let skybox_uniforms = uniform! {
-             projection: projection_matrix,
-             view: mainCam.get_view_matrix(),
-             cubetex: cubemap.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Linear),
-        };
+        // let skybox_uniforms = uniform! {
+        //      projection: projection_matrix,
+        //      view: mainCam.get_view_matrix(),
+        //      cubetex: cubemap.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Linear),
+        // };
 
        
 
-        target.draw(&skybox_vertex_buffer, &skybox_index_buffer, &program_skybox,
-            &skybox_uniforms, &draw_params).unwrap();
+        // target.draw(&skybox_vertex_buffer, &skybox_index_buffer, &program_skybox,
+        //     &skybox_uniforms, &draw_params).unwrap();
 
         if shouldSpawn {
             SelectedGameObjects.push(GameObject::new(Shape::Plane, &texture, &program, &vertex_buffer_terrain));
@@ -298,14 +300,14 @@ use GameObject::GameObject;
         
         for gameObject in &mut GameObjects{
             gameObject.recalculateMatrix();
-            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! { sampler: gameObject.texture, rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(), glowEffect : 1.0 as f32},
+            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! { time : programCounter, sampler: gameObject.texture, snowSampler : &snow_texture,rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(), glowEffect : 1.0 as f32},
             &draw_params).unwrap();
 
         }
 
         for gameObject in &mut SelectedGameObjects{
             gameObject.recalculateMatrix();
-            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! { sampler: gameObject.texture ,rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(), glowEffect : glowEffectMultiplier},
+            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! { time : programCounter, sampler: gameObject.texture , snowSampler : &snow_texture, rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(), glowEffect : glowEffectMultiplier},
             &draw_params).unwrap();
         }
 
