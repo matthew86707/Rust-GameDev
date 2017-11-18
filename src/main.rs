@@ -78,7 +78,7 @@ use GameObject::GameObject;
 
 	implement_vertex!(Vertex, position, uv);
 
-	let shape_terrain = PrimitiveShapes::get_plane(256, 256);
+	let shape_terrain = PrimitiveShapes::get_plane(16, 16);
 
 	let vertex_buffer_terrain = glium::VertexBuffer::new(&display, &shape_terrain).unwrap();
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
@@ -243,7 +243,7 @@ use GameObject::GameObject;
    let mut shouldSpawn : bool = false;
 
     while !closed {
-        programCounter += 0.0025;
+        programCounter += 0.00025;
         glowEffectMultiplier = (1.57 + f32::sin(programCounter) / 2.0);
 
 
