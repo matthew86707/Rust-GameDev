@@ -29,9 +29,9 @@ pub fn get_plane(sizeX : i32, sizeY : i32) -> Vec<Vertex> {
 		for j in 0..sizeY{
 			let between = Range::new(0, 100);
    		//	let mut rng : f32 = rand::thread_rng() as f32;
-   			let n = (rand::thread_rng().gen_range(0, 100) as f32 / 100.0);
+   			let n = (rand::thread_rng().gen_range(0, 200) as f32 / 100.0);
    			//let n : f32 = ((between.ind_sample(&mut rng)) / 50.0) as f32;
-   			row.push(n);
+   			row.push(n - 1.0);
 		}
 		height_map_raw.push(row);
 	}
@@ -48,44 +48,49 @@ pub fn get_plane(sizeX : i32, sizeY : i32) -> Vec<Vertex> {
 			//if(i % smoothing_scale_factor == 0 && j % smoothing_scale_factor == 0){
 			//	row.push(get_float_from_vec_map(&mut height_map_raw, i, j));
 			//}else{
-				println!("-----New Vertex-----");
-				let mut xCoord : f32 = (i as f32 / smoothing_scale_factor as f32);
-				let mut yCoord : f32 = (j as f32 / smoothing_scale_factor as f32);
-				println!("xCoord {}", xCoord);
-				println!("yCoord {}", yCoord);
-				let mut xCoordUpperBlend : f32 = xCoord.ceil() - xCoord;
-				let mut yCoordUpperBlend : f32 = yCoord.ceil() - yCoord;
-				let mut xCoordLowerBlend : f32 = xCoord - xCoord.floor();
-				let mut yCoordLowerBlend : f32 = yCoord - yCoord.floor();
-				println!("xCoordUpperBlendAmount {}", xCoordUpperBlend);
-				println!("xCoordLowerBlendAmount {}", xCoordLowerBlend);
-				println!("yCoordUpperBlendAmount {}", yCoordUpperBlend);
-				println!("yCoordLowerBlendAmount {}", yCoordLowerBlend);
+				//row.push(0.0);
+				// println!("-----New Vertex-----");
+				 let mut xCoord : f32 = (i as f32 / smoothing_scale_factor as f32);
+				 let mut yCoord : f32 = (j as f32 / smoothing_scale_factor as f32);
+				// println!("xCoord {}", xCoord);
+				// println!("yCoord {}", yCoord);
+				let mut xCoordLowerBlend : f32 = (((xCoord as i32) as f32) + 1.0) - xCoord;
+				 let mut yCoordLowerBlend : f32 = (((yCoord as i32) as f32) + 1.0) - yCoord;
+				let mut xCoordUpperBlend : f32 = xCoord - ((xCoord as i32) as f32);
+				 let mut yCoordUpperBlend : f32 = yCoord - ((yCoord as i32) as f32);
+				// println!("xCoordUpperBlendAmount {}", xCoordUpperBlend);
+				// println!("xCoordLowerBlendAmount {}", xCoordLowerBlend);
+				// println!("yCoordUpperBlendAmount {}", yCoordUpperBlend);
+				// println!("yCoordLowerBlendAmount {}", yCoordLowerBlend);
 				let mut upperXUpperY : f32 = get_float_from_vec_map(&mut height_map_raw, xCoord.ceil() as i32, yCoord.ceil() as i32);
 				let mut lowerXUpperY : f32 = get_float_from_vec_map(&mut height_map_raw, xCoord.floor() as i32, yCoord.ceil() as i32);
 				let mut upperXLowerY : f32 = get_float_from_vec_map(&mut height_map_raw, xCoord.ceil() as i32, yCoord.floor() as i32);
 				let mut lowerXLowerY : f32 = get_float_from_vec_map(&mut height_map_raw, xCoord.floor() as i32, yCoord.floor() as i32);
-				println!("{} {}", lowerXUpperY, upperXUpperY);
-				println!("{} {}", lowerXLowerY, upperXLowerY);
+				// println!("{} {}", lowerXUpperY, upperXUpperY);
+				// println!("{} {}", lowerXLowerY, upperXLowerY);
 				let mut ourValueX : f32 = (xCoordUpperBlend * ((upperXLowerY + upperXUpperY) / 2.0))  + (xCoordLowerBlend * ((lowerXLowerY + lowerXUpperY) / 2.0));
 				let mut ourValueY : f32 = (yCoordUpperBlend * ((upperXUpperY + lowerXUpperY) / 2.0))  + (yCoordLowerBlend * ((lowerXLowerY + upperXLowerY) / 2.0));
 				let mut ourValue : f32 = 0.0;
-				if(i % smoothing_scale_factor == 0 && j % smoothing_scale_factor == 0){
-					ourValue = get_float_from_vec_map(&mut height_map_raw, i, j);
-				}
-				if(i % smoothing_scale_factor == 0){
-					ourValue = (ourValueY);
-				}else if (j % smoothing_scale_factor == 0){
-					ourValue = (ourValueX);
-				}else{
-					ourValue = (ourValueX + ourValueY) / 2.0;
-				}
+
+
+
+				//if(i % smoothing_scale_factor == 0 && j % smoothing_scale_factor == 0){
+				//	ourValue = get_float_from_vec_map(&mut height_map_raw, i, j);
+				//}
+				//if(i % smoothing_scale_factor == 0){
+				//	ourValue = (ourValueY);
+				//}else if (j % smoothing_scale_factor == 0){
+				//	ourValue = (ourValueX);
+				//}else{
+				ourValue = (ourValueX + ourValueY) / 2.0;
+				//}
 				println!("ourValue {}", ourValue);
-				row.push(ourValue as f32);
-			//}
+				row.push(ourValue);
+			}
+			height_map.push(row);
 		}
-		height_map.push(row);
-	}
+		//height_map.push(row);
+	
 		
 
 	//println!("{:?}", height_map);
