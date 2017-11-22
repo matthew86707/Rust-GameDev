@@ -19,7 +19,6 @@ pub struct GameObject<'a>{
     pub texture : &'a glium::Texture2d,
     pub program : &'a glium::Program,
     pub vertex_buffer : &'a glium::VertexBuffer<Vertex>
-
 }
 
 impl<'a> GameObject<'a>{
@@ -33,9 +32,6 @@ impl<'a> GameObject<'a>{
             program : program,
             vertex_buffer : vertex_buffer
         }
-    }
-    pub fn regenTerrain(&mut self,  vertex_buffer : &'a glium::VertexBuffer<Vertex>){
-        self.vertex_buffer = vertex_buffer;
     }
     pub fn recalculateMatrix(&mut self){
         let transform = self.translation_matrix * self.rotation_matrix * self.scale_matrix;
