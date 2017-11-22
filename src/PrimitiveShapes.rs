@@ -98,7 +98,7 @@ pub fn get_plane(sizeX : i32, sizeY : i32) -> Vec<Vertex> {
 
 	//sm = scale multiplier
 	let sm : f32 = 1.0;
-	let vs : f32 = 10.5;
+	let vs : f32 = 5.5;
 	for i in 0..sizeX{
 		for j in 0..sizeY{
 			let blank : f32 = 0.0;

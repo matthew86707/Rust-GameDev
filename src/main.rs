@@ -23,6 +23,7 @@ fn main() {
   
     let mut program_counter : f32 = 0.0;
     let mut glow_effect_multiplier : f32 = 0.0;
+    let mut shading_intensity : f32 = 1.0;
 
     let mut events_loop = glium::glutin::EventsLoop::new();
     let window = glium::glutin::WindowBuilder::new();
@@ -40,7 +41,7 @@ fn main() {
 
 	implement_vertex!(Vertex, position, uv, normal);
 
-	let shape_terrain = PrimitiveShapes::get_plane(128, 128);
+	let shape_terrain = PrimitiveShapes::get_plane(512, 512);
 	let vertex_buffer_terrain = glium::VertexBuffer::new(&display, &shape_terrain).unwrap();
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
@@ -91,14 +92,14 @@ fn main() {
 
         for gameObject in &mut game_objects{
             gameObject.recalculateMatrix();
-            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! { time : program_counter, sampler: gameObject.texture, snowSampler : &snow_texture,rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(), glowEffect : 1.0 as f32},
+            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! {shading_intensity : shading_intensity, time : program_counter, sampler: gameObject.texture, snowSampler : &snow_texture,rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(), glowEffect : 1.0 as f32},
             &draw_params).unwrap();
 
         }
 
         for gameObject in &mut Selectedgame_objects{
             gameObject.recalculateMatrix();
-            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! { time : program_counter, sampler: gameObject.texture , snowSampler : &snow_texture, rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(), glowEffect : glow_effect_multiplier},
+            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! {shading_intensity : shading_intensity, time : program_counter, sampler: gameObject.texture , snowSampler : &snow_texture, rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(), glowEffect : glow_effect_multiplier},
             &draw_params).unwrap();
         }
 
@@ -150,12 +151,14 @@ fn main() {
                                  draw_params.polygon_mode = glium::draw_parameters::PolygonMode::Line;
                             }
                         },
-                        Some(glutin::VirtualKeyCode::W) => mainCam.translate(nalgebra::Vector3::new(0.0, 0.0, 0.25)),
-                        Some(glutin::VirtualKeyCode::S) => mainCam.translate(nalgebra::Vector3::new(0.0, 0.0, -0.25)),
-                        Some(glutin::VirtualKeyCode::A) => mainCam.translate(nalgebra::Vector3::new(-0.25, 0.0, 0.0)),
-                        Some(glutin::VirtualKeyCode::D) => mainCam.translate(nalgebra::Vector3::new(0.25, 0.0, 0.0)),
-                        Some(glutin::VirtualKeyCode::Q) => mainCam.translate(nalgebra::Vector3::new(0.25, 0.25, 0.0)),
-                        Some(glutin::VirtualKeyCode::E) => mainCam.translate(nalgebra::Vector3::new(0.25, -0.25, 0.0)),
+                        Some(glutin::VirtualKeyCode::W) => mainCam.translate(nalgebra::Vector3::new(0.0, 0.0, 0.75)),
+                        Some(glutin::VirtualKeyCode::S) => mainCam.translate(nalgebra::Vector3::new(0.0, 0.0, -0.75)),
+                        Some(glutin::VirtualKeyCode::A) => mainCam.translate(nalgebra::Vector3::new(-0.75, 0.0, 0.0)),
+                        Some(glutin::VirtualKeyCode::D) => mainCam.translate(nalgebra::Vector3::new(0.75, 0.0, 0.0)),
+                        Some(glutin::VirtualKeyCode::Q) => mainCam.translate(nalgebra::Vector3::new(0.75, 0.75, 0.0)),
+                        Some(glutin::VirtualKeyCode::E) => mainCam.translate(nalgebra::Vector3::new(0.75, -0.75, 0.0)),
+                        Some(glutin::VirtualKeyCode::X) => {shading_intensity = 0.0},
+                        Some(glutin::VirtualKeyCode::C) => {shading_intensity = 1.0},
                 		_ => ()
                 	},
                 	_ => ()

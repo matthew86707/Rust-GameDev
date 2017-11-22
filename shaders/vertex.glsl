@@ -3,7 +3,9 @@
 uniform mat4 transform;
 uniform mat4 projection_matrix;
 uniform mat4 view_matrix;
+uniform float shading_intensity;
 
+out float shading_i;
 out vec4 positionCoord;
 in vec3 position;
 in vec3 normal;
@@ -13,7 +15,7 @@ out float diffuse;
 out vec3 norm;
 
 void main() {
-
+	shading_i = shading_intensity;
 	norm = normal;
     fragment_uv = uv;
     gl_Position = projection_matrix * view_matrix * transform * vec4(position, 1);
