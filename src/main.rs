@@ -41,13 +41,13 @@ fn main() {
 
 	implement_vertex!(Vertex, position, uv, normal);
 
-	let shape_terrain = PrimitiveShapes::get_plane(512, 512);
+	let shape_terrain = PrimitiveShapes::get_plane(128, 128);
 	let vertex_buffer_terrain = glium::VertexBuffer::new(&display, &shape_terrain).unwrap();
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
 
 	let program = create_shader_program("shaders/vertex.glsl", "shaders/fragment.glsl", &display);
-    let program_UI = create_shader_program("shaders/vertex_ui.glsl", "shaders/fragment_ui.glsl", &display);
+   // let program_UI = create_shader_program("shaders/vertex_ui.glsl", "shaders/fragment_ui.glsl", &display);
 
 
     let mut mainCam : Camera::Camera = Camera::Camera::new();

@@ -11,7 +11,6 @@ in vec3 position;
 in vec3 normal;
 in vec2 uv;
 out vec2 fragment_uv;
-out float diffuse;
 out vec3 norm;
 
 void main() {
