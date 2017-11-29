@@ -1,5 +1,6 @@
 extern crate rand;
 use rand::Rng;
+use nalgebra::core::Vector3;
 
 #[derive(Copy, Clone)]
 pub struct Vertex {
@@ -20,39 +21,39 @@ fn get_float_from_vec_map(vector : &mut Vec<Vec<f32>>, x : i32, y : i32) -> f32 
 	}
 }
 
-fn get_vertex_from_vec_map(vector : &mut Vec<Vec<Vertex>>, x : i32, y : i32) -> Vector<f32> {
+fn get_vertex_from_vec_map(vector : &mut Vec<Vec<Vertex>>, x : i32, y : i32) -> Vertex {
 	match vector.get(x as usize){
 		Some(x1) => {
 			match x1.get(y as usize){
 				Some(y1) => {*y1},
-				None => {Vector3<f32>::new(0.0, 0.0, 0.0)}
+				None => {Vertex { position : [1.0, 1.0, 1.0], uv: [ 0.0, 0.0 ], normal : [0.0, 0.0, 0.0]}}
 			}
 		},
-		None => {Vector3<f32>::new(0.0, 0.0, 0.0)}
+		None => {Vertex { position : [1.0, 1.0, 1.0], uv: [ 0.0, 0.0 ], normal : [0.0, 0.0, 0.0]}}
 	}
 }
 
-fn set_vertex_in_vec_map(vector : &mut Vec<Vec<Vertex>>, x : i32, y : i32) -> Vector<f32> {
+fn set_vertex_in_vec_map(vector : &mut Vec<Vec<Vertex>>, x : i32, y : i32) -> Vertex {
 	match vector.get(x as usize){
 		Some(x1) => {
 			match x1.get(y as usize){
 				Some(y1) => {*y1},
-				None => {Vector3<f32>::new(0.0, 0.0, 0.0)}
+				None => {Vertex { position : [1.0, 1.0, 1.0], uv: [ 0.0, 0.0 ], normal : [0.0, 0.0, 0.0]}}
 			}
 		},
-		None => {Vector3<f32>::new(0.0, 0.0, 0.0)}
+		None => {Vertex { position : [1.0, 1.0, 1.0], uv: [ 0.0, 0.0 ], normal : [0.0, 0.0, 0.0]}}
 	}
 }
 
-fn get_vec_from_vec_map(vector : &mut Vec<Vec<Vertex>>, x : i32, y : i32) -> Vector<f32> {
+fn get_vec_from_vec_map(vector : &mut Vec<Vec<Vector3<f32>>>, x : i32, y : i32) -> Vector3<f32> {
 	match vector.get(x as usize){
 		Some(x1) => {
 			match x1.get(y as usize){
 				Some(y1) => {*y1},
-				None => {Vector3<f32>::new(0.0, 0.0, 0.0)}
+				None => {Vector3::new(0.0, 0.0, 0.0)}
 			}
 		},
-		None => {Vector3<f32>::new(0.0, 0.0, 0.0)}
+		None => {Vector3::new(0.0, 0.0, 0.0)}
 	}
 }
 
@@ -183,13 +184,13 @@ pub fn get_plane(sizeX : i32, sizeY : i32) -> Vec<Vertex> {
 
 			
 
-			vectorRow.push(Vector3<f32>::new(1.0*sm + i*2.0, *rl * vs, 1.0*sm + j*2.0], uv: [ 0.0, 1.0 ], normal : [0.0, 0.0, 0.0]));
-			vectorRow.push(Vector3<f32>::new( -1.0*sm + i*2.0, *ll * vs, 1.0*sm + j*2.0], uv: [ 1.0, 1.0 ], normal : [0.0, 0.0, 0.0]));
-			vectorRow.push(Vector3<f32>::new( 1.0*sm + i*2.0, *ru * vs, -1.0*sm + j*2.0], uv: [ 0.0, 0.0 ], normal : [0.0, 0.0, 0.0]));
+			vectorRow.push(Vertex { position : [1.0*sm + i*2.0, *rl * vs, 1.0*sm + j*2.0], uv: [ 0.0, 1.0 ], normal : [0.0, 0.0, 0.0]});
+			vectorRow.push(Vertex { position : [-1.0*sm + i*2.0, *ll * vs, 1.0*sm + j*2.0], uv: [ 1.0, 1.0 ], normal : [0.0, 0.0, 0.0]});
+			vectorRow.push(Vertex { position : [1.0*sm + i*2.0, *ru * vs, -1.0*sm + j*2.0], uv: [ 0.0, 0.0 ], normal : [0.0, 0.0, 0.0]});
 
-			vectorRow.push(Vector3<f32>::new(-1.0*sm + i*2.0, *lu * vs, -1.0*sm + j*2.0], uv: [ 1.0, 0.0], normal : [0.0, 0.0, 0.0]));
-			vectorRow.push(Vector3<f32>::new(1.0*sm + i*2.0, *ru * vs, -1.0*sm + j*2.0], uv: [ 0.0, 0.0], normal : [0.0, 0.0, 0.0]));
-			vectorRow.push(Vector3<f32>::new(-1.0*sm + i*2.0, *ll * vs, 1.0*sm + j*2.0], uv: [ 1.0, 1.0 ], normal : [0.0, 0.0, 0.0]));
+			vectorRow.push(Vertex { position : [-1.0*sm + i*2.0, *lu * vs, -1.0*sm + j*2.0], uv: [ 1.0, 0.0], normal : [0.0, 0.0, 0.0]});
+			vectorRow.push(Vertex { position : [1.0*sm + i*2.0, *ru * vs, -1.0*sm + j*2.0], uv: [ 0.0, 0.0], normal : [0.0, 0.0, 0.0]});
+			vectorRow.push(Vertex { position : [-1.0*sm + i*2.0, *ll * vs, 1.0*sm + j*2.0], uv: [ 1.0, 1.0 ], normal : [0.0, 0.0, 0.0]});
 		}
 		height_map_triangles.push(vectorRow);
 	}
@@ -198,12 +199,12 @@ pub fn get_plane(sizeX : i32, sizeY : i32) -> Vec<Vertex> {
 	for i in 0..sizeX{
 		for j in 0..sizeY{
 
-			let mut thisVertex : Vector3<f32> = get_vec_from_vec_map(&height_map_triangles, i, j);
+			let mut thisVertex : Vertex = get_vertex_from_vec_map(&mut height_map_triangles, i, j);
 
-			let mut topVert : Vector3<f32> = get_vec_from_vec_map(&height_map_triangles, i, j + 1);
-			let mut bottomVert : Vector3<f32> = get_vec_from_vec_map(&height_map_triangles, i, j - 1);
-			let mut rightVert : Vector3<f32> = get_vec_from_vec_map(&height_map_triangles, i + 1, j);
-			let mut leftVert : Vector3<f32> = get_vec_from_vec_map(&height_map_triangles, i - 1, j);
+			let mut topVert : Vertex = get_vertex_from_vec_map(&mut height_map_triangles, i, j + 1);
+			let mut bottomVert : Vertex = get_vertex_from_vec_map(&mut height_map_triangles, i, j - 1);
+			let mut rightVert : Vertex = get_vertex_from_vec_map(&mut height_map_triangles, i + 1, j);
+			let mut leftVert : Vertex = get_vertex_from_vec_map(&mut height_map_triangles, i - 1, j);
 
 			let topRightTriangleNorms : Vector3<f32> = get_normal_from_verts(topVert, rightVert, thisVertex);
 			let topLeftTriangleNorms : Vector3<f32> = get_normal_from_verts(topVert, leftVert, thisVertex);
@@ -213,20 +214,25 @@ pub fn get_plane(sizeX : i32, sizeY : i32) -> Vec<Vertex> {
 			let mut normal_totals : Vector3<f32> = topRightTriangleNorms + topLeftTriangleNorms + bottomRightTriangleNorms + bottomLeftTriangleNorms;
 			normal_totals = normal_totals.normalize();
 
-			get
-			height_map_triangles
+			thisVertex.normal = normal_totals.into();
+			toReturn.push(thisVertex);
 
 		}
 	}
 
 
-	return toReturn;
+	return height_map_triangles;
 }
 
 fn get_normal_from_verts(vertexA : Vertex, vertexB : Vertex, vertexC : Vertex) -> Vector3<f32> {
 	
-	let U : Vector3<f32> = vertexB - vertexA;
-	let V : Vector3<f32> = vertexC - vertexA;
+	let vA : Vector3<f32> = vertexA.position.into();
+	let vB : Vector3<f32> = vertexB.position.into();
+	let vC : Vector3<f32> = vertexC.position.into();
+
+
+	let U : Vector3<f32> = vB - vA;
+	let V : Vector3<f32> = vC - vA;
 
 	U.normalize();
 	V.normalize();
