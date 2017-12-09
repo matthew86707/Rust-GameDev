@@ -9,11 +9,6 @@ pub struct Vertex {
     pub uv: [f32; 2],
 }
 
-pub struct BasicVertexData{
-	pub height : [f32; 3],
-	pub normal : [f32; 3]
-}
-
 fn get_float_from_vec_map(vector : &mut Vec<Vec<f32>>, x : i32, y : i32) -> f32 {
 	match vector.get(x as usize){
 		Some(x1) => {
@@ -88,30 +83,51 @@ pub fn get_plane(sizeX : i32, sizeY : i32) -> Vec<Vertex> {
 	for i in 0..sizeX * smoothing_scale_factor{
 		let mut row : Vec<f32> = Vec::new();
 		for j in 0..sizeY * smoothing_scale_factor{
-
-				let mut xCoord : f32 = (i as f32 / smoothing_scale_factor as f32);
-				let mut yCoord : f32 = (j as f32 / smoothing_scale_factor as f32);
-
+			//if(i % smoothing_scale_factor == 0 && j % smoothing_scale_factor == 0){
+			//	row.push(get_float_from_vec_map(&mut height_map_raw, i, j));
+			//}else{
+				//row.push(0.0);
+				// println!("-----New Vertex-----");
+				 let mut xCoord : f32 = (i as f32 / smoothing_scale_factor as f32);
+				 let mut yCoord : f32 = (j as f32 / smoothing_scale_factor as f32);
+				// println!("xCoord {}", xCoord);
+				// println!("yCoord {}", yCoord);
 				let mut xCoordLowerBlend : f32 = (((xCoord as i32) as f32) + 1.0) - xCoord;
-				let mut yCoordLowerBlend : f32 = (((yCoord as i32) as f32) + 1.0) - yCoord;
+				 let mut yCoordLowerBlend : f32 = (((yCoord as i32) as f32) + 1.0) - yCoord;
 				let mut xCoordUpperBlend : f32 = xCoord - ((xCoord as i32) as f32);
-				let mut yCoordUpperBlend : f32 = yCoord - ((yCoord as i32) as f32);
-
+				 let mut yCoordUpperBlend : f32 = yCoord - ((yCoord as i32) as f32);
+				// println!("xCoordUpperBlendAmount {}", xCoordUpperBlend);
+				// println!("xCoordLowerBlendAmount {}", xCoordLowerBlend);
+				// println!("yCoordUpperBlendAmount {}", yCoordUpperBlend);
+				// println!("yCoordLowerBlendAmount {}", yCoordLowerBlend);
 				let mut upperXUpperY : f32 = get_float_from_vec_map(&mut height_map_raw, xCoord.ceil() as i32, yCoord.ceil() as i32);
 				let mut lowerXUpperY : f32 = get_float_from_vec_map(&mut height_map_raw, xCoord.floor() as i32, yCoord.ceil() as i32);
 				let mut upperXLowerY : f32 = get_float_from_vec_map(&mut height_map_raw, xCoord.ceil() as i32, yCoord.floor() as i32);
 				let mut lowerXLowerY : f32 = get_float_from_vec_map(&mut height_map_raw, xCoord.floor() as i32, yCoord.floor() as i32);
-
+				// println!("{} {}", lowerXUpperY, upperXUpperY);
+				// println!("{} {}", lowerXLowerY, upperXLowerY);
 				let mut ourValueX : f32 = (xCoordUpperBlend * ((upperXLowerY + upperXUpperY) / 2.0))  + (xCoordLowerBlend * ((lowerXLowerY + lowerXUpperY) / 2.0));
 				let mut ourValueY : f32 = (yCoordUpperBlend * ((upperXUpperY + lowerXUpperY) / 2.0))  + (yCoordLowerBlend * ((lowerXLowerY + upperXLowerY) / 2.0));
 				let mut ourValue : f32 = 0.0;
 
+
+
+				//if(i % smoothing_scale_factor == 0 && j % smoothing_scale_factor == 0){
+				//	ourValue = get_float_from_vec_map(&mut height_map_raw, i, j);
+				//}
+				//if(i % smoothing_scale_factor == 0){
+				//	ourValue = (ourValueY);
+				//}else if (j % smoothing_scale_factor == 0){
+				//	ourValue = (ourValueX);
+				//}else{
 				ourValue = (ourValueX + ourValueY) / 2.0;
+				//}
+				//println!("ourValue {}", ourValue);
 				row.push(ourValue);
 			}
 			height_map.push(row);
 		}
-
+		//height_map.push(row);
 	
 		
 
@@ -164,10 +180,9 @@ pub fn get_plane(sizeX : i32, sizeY : i32) -> Vec<Vertex> {
 			X.normalize();
 			Y.normalize();
 
-			triangleOneNormal = U.cross(&V).into();
 			triangleTwoNormal = X.cross(&Y).into();
 
-			//vectorRow.push(BasicVertexData)
+			
 
 			vectorRow.push(Vertex { position : [1.0*sm + i*2.0, *rl * vs, 1.0*sm + j*2.0], uv: [ 0.0, 1.0 ], normal : [0.0, 0.0, 0.0]});
 			vectorRow.push(Vertex { position : [-1.0*sm + i*2.0, *ll * vs, 1.0*sm + j*2.0], uv: [ 1.0, 1.0 ], normal : [0.0, 0.0, 0.0]});
@@ -206,7 +221,7 @@ pub fn get_plane(sizeX : i32, sizeY : i32) -> Vec<Vertex> {
 	}
 
 
-	return toReturn;
+	return height_map_triangles;
 }
 
 fn get_normal_from_verts(vertexA : Vertex, vertexB : Vertex, vertexC : Vertex) -> Vector3<f32> {
@@ -225,7 +240,13 @@ fn get_normal_from_verts(vertexA : Vertex, vertexB : Vertex, vertexC : Vertex) -
 	U.cross(&V)
 }
 
-fn get_world_pos_for_vertex(vector : &mut Vec<Vec<f32>>, pos_x : i32, pos_y : i32) -> [f32; 3]{
-	let mut height : f32 = get_float_from_vec_map(vector, pos_x, pos_y);
-	return [1.0 + i*2.0, height * 5.5, 1.0*sm + j*2.0];
+pub fn get_sphere(divisionsX : i32, divisionY : i32) -> Vec<Vertex> {
+	let vertex1 = Vertex { position: [-1.0, -1.0, -2.0], uv: [ 0.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
+	let vertex2 = Vertex { position: [ 1.0, -1.0, -2.0], uv: [ 1.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
+	let vertex3 = Vertex { position: [ -1.0, 1.0, -2.0], uv: [ 0.0, 0.0 ], normal: [0.0, 0.0, 0.0] };
+
+	let vertex4 = Vertex { position: [1.0, 1.0, -2.0], uv: [ 1.0, 0.0], normal: [0.0, 0.0, 0.0] };
+	let vertex5 = Vertex { position: [ -1.0, 1.0, -2.0], uv: [ 0.0, 0.0], normal: [0.0, 0.0, 0.0] };
+	let vertex6 = Vertex { position: [ 1.0, -1.0, -2.0], uv: [ 1.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
+	vec![vertex1, vertex2, vertex3, vertex4, vertex5, vertex6]
 }
