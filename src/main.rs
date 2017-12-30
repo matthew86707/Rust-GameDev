@@ -3,6 +3,7 @@ extern crate glium;
 extern crate image;
 extern crate nalgebra;
 extern crate rand;
+extern crate noise;
 
 mod GameObject;
 mod Camera;
@@ -111,13 +112,13 @@ fn main() {
             match ev {
 
                 glutin::Event::WindowEvent { event, .. } => match event {
-                    glutin::WindowEvent::MouseMoved{position, ..} => {
+                    glutin::WindowEvent::CursorMoved{position, ..} => {
                     dx = mx - position.0;
                     dy = my - position.1;
                     mx = position.0;
                     my = position.1;
-                    mainCam.rotate(nalgebra::Vector3::new(0.0, 0.0, dx as f32 / 3.0));
-                    mainCam.rotate(nalgebra::Vector3::new(0.0, -(dy as f32 / 3.0), 0.0));
+                    mainCam.rotate(nalgebra::Vector3::new(0.0, 0.0, (dx as f32 / 3.0)));
+                    mainCam.rotate(nalgebra::Vector3::new(0.0, (dy as f32 / 3.0), 0.0));
                 },
                 	glutin::WindowEvent::Closed => closed = true,
                 	glutin::WindowEvent::KeyboardInput { input, .. } => match input.virtual_keycode {
@@ -151,7 +152,10 @@ fn main() {
                                  draw_params.polygon_mode = glium::draw_parameters::PolygonMode::Line;
                             }
                         },
-                        Some(glutin::VirtualKeyCode::W) => mainCam.translate(nalgebra::Vector3::new(0.0, 0.0, 0.75)),
+                        Some(glutin::VirtualKeyCode::W) => {
+                                                                let forward_vec = mainCam.forward();
+                                                                mainCam.translate(forward_vec * 1.5)
+                                                            },
                         Some(glutin::VirtualKeyCode::S) => mainCam.translate(nalgebra::Vector3::new(0.0, 0.0, -0.75)),
                         Some(glutin::VirtualKeyCode::A) => mainCam.translate(nalgebra::Vector3::new(-0.75, 0.0, 0.0)),
                         Some(glutin::VirtualKeyCode::D) => mainCam.translate(nalgebra::Vector3::new(0.75, 0.0, 0.0)),
