@@ -16,7 +16,11 @@ in vec3 norm;
 
 void main() {
 
-    vec3 lightVector = normalize(-(vec3(35.0, 800.0, 800.0) - positionCoord.xyz));
+// Get a lighting direction vector from the light to the vertex.
+    vec3 lightVector = normalize(-abs(vec3(35.0, 150.0, 35.0) - positionCoord.xyz));
+ 
+    // Calculate the dot product of the light vector and vertex normal. If the normal and light vector are
+    // pointing in the same direction then it will get max illumination.
     float diffuse = clamp(max(dot(norm, lightVector), 0.1) / 10, 0.1, 1.2); 
 
 	vec4 snowRockMixedTex = mix(texture(rockSampler, fragment_uv), texture(snowSampler, fragment_uv), clamp(1.5 - positionCoord.y + sin(time) * 5, 0.0, 1.0));
