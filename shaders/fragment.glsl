@@ -23,8 +23,8 @@ void main() {
     // pointing in the same direction then it will get max illumination.
     float diffuse = clamp(max(dot(norm, lightVector), 0.1) / 10, 0.1, 1.2); 
 
-	vec4 snowRockMixedTex = mix(texture(rockSampler, fragment_uv), texture(snowSampler, fragment_uv), clamp(1.5 - positionCoord.y + sin(time) * 5, 0.0, 1.0));
-	vec4 mixedTex = mix(texture(sampler, fragment_uv), snowRockMixedTex, clamp((3-positionCoord.y + 1) / 3.0, 0.0, 1.0));
+	vec4 snowRockMixedTex = mix(texture(rockSampler, fragment_uv), texture(snowSampler, fragment_uv), 0.0);
+	vec4 mixedTex = mix(texture(sampler, fragment_uv), snowRockMixedTex, clamp((1-positionCoord.y - 3) / 3.0, 0.0, 1.0));
 	if(shading_i == 0.0){
 		color =  mixedTex * vec4(glowEffect, glowEffect, glowEffect, 1.0) * vec4(0.5, 0.5, 0.5, 1.0);
 	}else{

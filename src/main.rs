@@ -14,6 +14,10 @@ use glium::{glutin, Surface};
 use std::io::Cursor;
 use std::fs::File;
 use std::io::prelude::*;
+use std::net::TcpStream;
+ use std::io::prelude::*;
+    use std::io::BufWriter;
+    use std::io::BufReader;
 
 fn main() {
 
@@ -39,15 +43,54 @@ fn main() {
 	let texture = load_texture("grass.jpg", &display);
     let snow_texture = load_texture("Snow.jpg", &display);
     let texture_rock = load_texture("rock.jpg", &display);
+    let water_texture = load_texture("water.jpg", &display);
 
 	implement_vertex!(Vertex, position, uv, normal);
 
-	let shape_terrain = PrimitiveShapes::get_plane(512, 512);
+
+    let mut stream = TcpStream::connect("localhost:4242").unwrap();
+    let mut world_seed : i32;
+    {
+        let mut reader = BufReader::new(&stream);
+        let mut line = String::new();
+        reader.read_line(&mut line);
+
+        println!("World Seed From Server : {}", line);
+        line.pop();
+        world_seed = line.parse::<i32>().unwrap();
+    }
+
+	let shape_terrain = PrimitiveShapes::get_plane(512, 512, world_seed);
 	let vertex_buffer_terrain = glium::VertexBuffer::new(&display, &shape_terrain).unwrap();
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
+    let vertex1 = Vertex { position: [-1.0, -1.0, -2.0], uv: [ 0.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
+    let vertex2 = Vertex { position: [ 1.0, -1.0, -2.0], uv: [ 1.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
+    let vertex3 = Vertex { position: [ -1.0, 1.0, -2.0], uv: [ 0.0, 0.0 ], normal: [0.0, 0.0, 0.0] };
+
+    let vertex4 = Vertex { position: [1.0, 1.0, -2.0], uv: [ 1.0, 0.0], normal: [0.0, 0.0, 0.0] };
+    let vertex5 = Vertex { position: [ -1.0, 1.0, -2.0], uv: [ 0.0, 0.0], normal: [0.0, 0.0, 0.0] };
+    let vertex6 = Vertex { position: [ 1.0, -1.0, -2.0], uv: [ 1.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
+
+    let vertex_buffer_player = glium::VertexBuffer::new(&display, &vec![vertex1, vertex2, vertex3, vertex4, vertex5, vertex6]).unwrap();
+
+    let mut scale_a : f32 = 500.0;
+    let mut scale_b : f32 = 1.0;
+
+    let vertex1 = Vertex { position: [1.0 * scale_a, 2.0 * scale_b, -1.0 * scale_a], uv: [ 0.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
+    let vertex2 = Vertex { position: [ 1.0 * scale_a, 2.0 * scale_b, 1.0 * scale_a], uv: [ 1.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
+    let vertex3 = Vertex { position: [ -1.0 * scale_a, 2.0 * scale_b, -1.0 * scale_a], uv: [ 0.0, 0.0 ], normal: [0.0, 0.0, 0.0] };
+
+    let vertex4 = Vertex { position: [-1.0 * scale_a, 2.0 * scale_b, 1.0 * scale_a], uv: [ 1.0, 0.0], normal: [0.0, 0.0, 0.0] };
+    let vertex5 = Vertex { position: [ -1.0 * scale_a, 2.0 * scale_b, -1.0 * scale_a], uv: [ 0.0, 0.0], normal: [0.0, 0.0, 0.0] };
+    let vertex6 = Vertex { position: [ 1.0 * scale_a, 2.0 * scale_b, 1.0 * scale_a], uv: [ 1.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
+
+    let vertex_buffer_water = glium::VertexBuffer::new(&display, &vec![vertex1, vertex2, vertex3, vertex4, vertex5, vertex6]).unwrap();
+
 
 	let program = create_shader_program("shaders/vertex.glsl", "shaders/fragment.glsl", &display);
+    let program_water = create_shader_program("shaders/vertex_water.glsl", "shaders/fragment_water.glsl", &display);
+    let program_player = create_shader_program("shaders/vertex_player.glsl", "shaders/fragment_player.glsl", &display);
     let program_UI = create_shader_program("shaders/vertex_ui.glsl", "shaders/fragment_ui.glsl", &display);
 
 
@@ -56,10 +99,13 @@ fn main() {
 
     {
 
-    let mut Selectedgame_objects : Vec<GameObject> = Vec::new();
     let mut game_objects : Vec<GameObject> = Vec::new();
 
     let mut test_object : GameObject = GameObject::new(Shape::Plane, &texture, &program, &vertex_buffer_terrain);
+
+    let mut water : GameObject = GameObject::new(Shape::Plane, &water_texture, &program_water, &vertex_buffer_water);
+
+    let mut player_objects : Vec<GameObject> = Vec::new();
 
     let mut mx : f64 = 0.0;
     let mut my : f64 = 0.0;
@@ -77,7 +123,48 @@ fn main() {
 
    let mut should_spawn : bool = false;
 
+   water.set_position(250.0, 0.0, 250.0);
+
     while !closed {
+
+        //Handle networking
+
+        {
+        //Format player position
+        let position_x_string = mainCam.position[0].to_string();
+        let position_y_string = mainCam.position[1].to_string();
+        let position_z_string = mainCam.position[2].to_string();
+        let to_send_string = format!("{}:{}:{}\n", position_x_string, position_y_string, position_z_string);
+
+        //Send player location as TCP packet
+        let _ = stream.write(to_send_string.as_bytes());
+        stream.flush();
+        }
+
+        //Read player data
+        {
+        let mut reader = BufReader::new(&stream);
+        let mut line = String::new();
+        reader.read_line(&mut line);
+
+        line.pop();
+
+        let mut data : Vec<&str> = Vec::new(); 
+        data = line.split(":").collect::<Vec<&str>>();;
+
+        if(player_objects.len() < (data.len() / 4)){
+            println!("Adding Player...");
+            for i in  0..(((data.len() / 4) - player_objects.len()) + 1){
+            player_objects.push(GameObject::new(Shape::Plane, &texture, &program_player, &vertex_buffer_player));
+        }
+        }
+
+        for i in 0..(data.len() / 4)  {
+            let mut player = &mut player_objects.get_mut(i).unwrap();
+            player.set_position(data.get((i * 4) + 1).unwrap().parse::<f32>().unwrap(), data.get((i * 4) + 2).unwrap().parse::<f32>().unwrap(), data.get((i * 4) + 3).unwrap().parse::<f32>().unwrap());
+        }
+
+        }
         program_counter += 0.00005;
         glow_effect_multiplier = (1.57 + f32::sin(program_counter) / 2.0);
 
@@ -87,8 +174,14 @@ fn main() {
         let projection_matrix: [[f32; 4]; 4] = projection_matrix.into();
 
         if should_spawn {
-            Selectedgame_objects.push(GameObject::new(Shape::Plane, &texture, &program, &vertex_buffer_terrain));
+            game_objects.push(GameObject::new(Shape::Plane, &texture, &program, &vertex_buffer_terrain));
             should_spawn = false;
+        }
+
+        for player in &mut player_objects{
+            player.recalculateMatrix();
+            target.draw(player.vertex_buffer, &indices, player.program, &uniform! {time : program_counter, transform: player.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix()},
+            &draw_params).unwrap();
         }
 
         for gameObject in &mut game_objects{
@@ -98,13 +191,10 @@ fn main() {
 
         }
 
-        for gameObject in &mut Selectedgame_objects{
-            gameObject.recalculateMatrix();
-            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! {shading_intensity : shading_intensity, time : program_counter, sampler: gameObject.texture , snowSampler : &snow_texture, rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(), glowEffect : glow_effect_multiplier},
+        water.recalculateMatrix();
+        target.draw(water.vertex_buffer, &indices, water.program, &uniform! {sampler: water.texture, transform: water.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix()},
             &draw_params).unwrap();
-        }
-
-        
+       
         target.finish().unwrap();
 
         events_loop.poll_events(|ev| {
@@ -123,28 +213,9 @@ fn main() {
                 	glutin::WindowEvent::Closed => closed = true,
                 	glutin::WindowEvent::KeyboardInput { input, .. } => match input.virtual_keycode {
                 		Some(glutin::VirtualKeyCode::Escape) => closed = true,
-                        Some(glutin::VirtualKeyCode::Right) => {match Selectedgame_objects.get_mut(0) { 
-                            Some(mut obj) => obj.translate(-0.1, 0.0, 0.0),
-                            _ => ()
-                        }},
-                        Some(glutin::VirtualKeyCode::Left) => {match Selectedgame_objects.get_mut(0) { 
-                            Some(mut obj) => obj.translate(0.1, 0.0, 0.0),
-                            _ => ()
-                        }},
-                        Some(glutin::VirtualKeyCode::Up) => {match Selectedgame_objects.get_mut(0) { 
-                            Some(mut obj) => obj.translate(0.0, 0.0, -0.1),
-                            _ => ()
-                        }},
-                        Some(glutin::VirtualKeyCode::Down) => {match Selectedgame_objects.get_mut(0) { 
-                            Some(mut obj) => obj.translate(0.0, 0.0, 0.1),
-                            _ => ()
-                        }},
+
                         Some(glutin::VirtualKeyCode::P) => {should_spawn = true;},
                         Some(glutin::VirtualKeyCode::O) => {should_spawn = true;},
-                        Some(glutin::VirtualKeyCode::Return) => {
-                            let mut left_over : Vec<GameObject> = Selectedgame_objects.drain(0..).collect();
-                            game_objects.extend(left_over);
-                        },
                         Some(glutin::VirtualKeyCode::Z) => {
                             if draw_params.polygon_mode == glium::draw_parameters::PolygonMode::Line{
                                 draw_params.polygon_mode = glium::draw_parameters::PolygonMode::Fill;
@@ -156,9 +227,18 @@ fn main() {
                                                                 let forward_vec = mainCam.forward();
                                                                 mainCam.translate(forward_vec * 1.5)
                                                             },
-                        Some(glutin::VirtualKeyCode::S) => mainCam.translate(nalgebra::Vector3::new(0.0, 0.0, -0.75)),
-                        Some(glutin::VirtualKeyCode::A) => mainCam.translate(nalgebra::Vector3::new(-0.75, 0.0, 0.0)),
-                        Some(glutin::VirtualKeyCode::D) => mainCam.translate(nalgebra::Vector3::new(0.75, 0.0, 0.0)),
+                        Some(glutin::VirtualKeyCode::S) => {
+                                                                let forward_vec = -mainCam.forward();
+                                                                mainCam.translate(forward_vec * 1.5)
+                                                            },
+                        Some(glutin::VirtualKeyCode::D) => {
+                                                                let right_vec = mainCam.right();
+                                                                mainCam.translate(right_vec * 1.5)
+                                                            },
+                        Some(glutin::VirtualKeyCode::A) => {
+                                                                let right_vec = -mainCam.right();
+                                                                mainCam.translate(right_vec * 1.5)
+                                                            },
                         Some(glutin::VirtualKeyCode::Q) => mainCam.translate(nalgebra::Vector3::new(0.75, 0.75, 0.0)),
                         Some(glutin::VirtualKeyCode::E) => mainCam.translate(nalgebra::Vector3::new(0.75, -0.75, 0.0)),
                         Some(glutin::VirtualKeyCode::X) => {shading_intensity = 0.0},

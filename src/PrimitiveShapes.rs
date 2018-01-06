@@ -23,12 +23,18 @@ fn get_float_from_vec_map(vector : &mut Vec<Vec<f32>>, x : i32, y : i32) -> f32 
 	}
 }
 
-pub fn get_plane(sizeX : i32, sizeY : i32) -> Vec<Vertex> {
+
+pub fn get_plane(sizeX : i32, sizeY : i32, world_seed : i32) -> Vec<Vertex> {
 	let mut toReturn : Vec<Vertex> = Vec::new();
 	use rand::distributions::{IndependentSample, Range};
 	let mut height_map_raw = Vec::new();
     use noise::{NoiseModule, Perlin};
+    use noise::Seedable;
 	let perlin = Perlin::new();
+	let perlin_macro = Perlin::new();
+
+	perlin.set_seed(world_seed as usize);
+	perlin_macro.set_seed((world_seed + 1) as usize);
 	
 	for i in 0..sizeX{
 		let mut row : Vec<f32> = Vec::new();
@@ -37,7 +43,7 @@ pub fn get_plane(sizeX : i32, sizeY : i32) -> Vec<Vertex> {
    		//	let mut rng : f32 = rand::thread_rng() as f32;
    		//	let n = (rand::thread_rng().gen_range(0, 200) as f32 / 100.0);
    		//	let n : f32 = ((between.ind_sample(&mut rng)) / 50.0) as f32;
-   			row.push(perlin.get([((i as f32) / 20.0) +  0.1, ((j as f32) / 20.0) +  0.1]));
+   			row.push(perlin.get([((i as f32) / 80.0) +  0.1, ((j as f32) / 80.0) +  0.1]) * perlin_macro.get([((i as f32) / 180.0) +  0.1, ((j as f32) / 180.0) +  0.1]));
 		}
 		height_map_raw.push(row);
 	}
@@ -103,7 +109,7 @@ pub fn get_plane(sizeX : i32, sizeY : i32) -> Vec<Vertex> {
 
 	//sm = scale multiplier
 	let sm : f32 = 1.0;
-	let vs : f32 = 5.5;
+	let vs : f32 = 50.5;
 	for i in 0..sizeX{
 		for j in 0..sizeY{
 			let blank : f32 = 0.0;

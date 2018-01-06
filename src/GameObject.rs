@@ -33,6 +33,11 @@ impl<'a> GameObject<'a>{
             vertex_buffer : vertex_buffer
         }
     }
+    pub fn set_position(&mut self, x : f32, y : f32, z : f32){
+        self.translation_matrix[(0, 3)] = x;
+        self.translation_matrix[(1, 3)] = y;
+        self.translation_matrix[(2, 3)] = z;
+    }
     pub fn recalculateMatrix(&mut self){
         let transform = self.translation_matrix * self.rotation_matrix * self.scale_matrix;
         self.transform = transform.into();

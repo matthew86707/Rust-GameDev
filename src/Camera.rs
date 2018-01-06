@@ -2,8 +2,8 @@ extern crate glium;
 extern crate image;
 extern crate nalgebra;
 
-const NEAR_PLANE: f32 = 0.001;
-const FAR_PLANE : f32 = 1000.0;
+const NEAR_PLANE: f32 = 0.1;
+const FAR_PLANE : f32 = 10000.0;
 
 pub struct Camera{
 	
@@ -99,13 +99,18 @@ impl Camera{
         rotation_matrix_x[(1, 0)] = -f32::sin(f32::to_radians(self.rotation[0]));
         rotation_matrix_x[(1, 1)] = f32::cos(f32::to_radians(self.rotation[0]));
 
-        println!("{}", self.position[1]);
-
         (translation_matrix) * (rotation_matrix_z * rotation_matrix_y * rotation_matrix_x)
     }
 
     pub fn forward(&self) -> nalgebra::Vector3<f32> {
         let mut point = nalgebra::Vector4::new(0.0, 0.0, -1.0, 0.0);
+        point = self.get_view_matrix_as_matrix() * point;
+
+        nalgebra::Vector3::new(point[0], point[1], point[2])
+    }
+
+    pub fn right(&self) -> nalgebra::Vector3<f32> {
+        let mut point = nalgebra::Vector4::new(1.0, 0.0, 0.0, 0.0);
         point = self.get_view_matrix_as_matrix() * point;
 
         nalgebra::Vector3::new(point[0], point[1], point[2])
