@@ -15,9 +15,12 @@ use std::io::Cursor;
 use std::fs::File;
 use std::io::prelude::*;
 use std::net::TcpStream;
- use std::io::prelude::*;
-    use std::io::BufWriter;
-    use std::io::BufReader;
+use std::io::prelude::*;
+use std::io::BufWriter;
+use std::io::BufReader;
+use glium::texture::cubemap::{Cubemap};
+use glium::framebuffer::{SimpleFrameBuffer};
+
 
 fn main() {
 
@@ -41,9 +44,12 @@ fn main() {
     let mut closed = false;
 
 	let texture = load_texture("grass.jpg", &display);
+    let texture_skybox = load_texture("skybox.jpg", &display);
     let snow_texture = load_texture("Snow.jpg", &display);
     let texture_rock = load_texture("rock.jpg", &display);
     let water_texture = load_texture("water.jpg", &display);
+
+    let mut cubemap = texture_to_cubemap(&texture, &display);
 
 	implement_vertex!(Vertex, position, uv, normal);
 
@@ -63,6 +69,9 @@ fn main() {
 	let shape_terrain = PrimitiveShapes::get_plane(512, 512, world_seed);
 	let vertex_buffer_terrain = glium::VertexBuffer::new(&display, &shape_terrain).unwrap();
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
+
+    let vertex_buffer_skybox = get_cube_vertex_buffer(&display);
+    let indices_skybox = get_index_buffer(&display);
 
     let vertex1 = Vertex { position: [-1.0, -1.0, -2.0], uv: [ 0.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
     let vertex2 = Vertex { position: [ 1.0, -1.0, -2.0], uv: [ 1.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
@@ -92,6 +101,7 @@ fn main() {
     let program_water = create_shader_program("shaders/vertex_water.glsl", "shaders/fragment_water.glsl", &display);
     let program_player = create_shader_program("shaders/vertex_player.glsl", "shaders/fragment_player.glsl", &display);
     let program_UI = create_shader_program("shaders/vertex_ui.glsl", "shaders/fragment_ui.glsl", &display);
+    let program_skybox = create_shader_program("shaders/vertex_skybox.glsl", "shaders/fragment_skybox.glsl", &display);
 
 
     let mut mainCam : Camera::Camera = Camera::Camera::new();
@@ -172,6 +182,10 @@ fn main() {
         target.clear_color_and_depth((0.25, 0.45, 1.0, 1.0), 1.0);
 
         let projection_matrix: [[f32; 4]; 4] = projection_matrix.into();
+
+
+        target.draw(vertex_buffer_skybox, indices_skybox, program_skybox, &uniform! {sampler : cubemap, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix()},
+            &draw_params).unwrap();
 
         if should_spawn {
             game_objects.push(GameObject::new(Shape::Plane, &texture, &program, &vertex_buffer_terrain));
@@ -256,6 +270,57 @@ fn main() {
 }
 }
 
+fn texture_to_cubemap(texture : &glium::Texture2d, display : &glium::Display) -> glium::texture::cubemap::Cubemap {
+    
+    use glium::texture::CubeLayer;
+
+
+    let mut cubemap = Cubemap::empty(display, 900).unwrap();
+    {
+    let mut fb = texture.as_surface();
+
+    let mut negX = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::NegativeX)).unwrap();
+    let mut posX = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::PositiveX)).unwrap();
+    let mut negY = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::NegativeY)).unwrap();
+    let mut posY = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::PositiveY)).unwrap();
+    let mut negZ = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::NegativeZ)).unwrap();
+    let mut posZ = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::PositiveZ)).unwrap();
+
+
+    add_skybox_texture(&mut negX, &fb, 1024, 1024);
+    add_skybox_texture(&mut posX, &fb, 3072, 1024);
+    add_skybox_texture(&mut negY, &fb, 1024, 0);
+    add_skybox_texture(&mut posY, &fb, 1024, 2048);
+    add_skybox_texture(&mut negZ, &fb, 2048, 1024);
+    add_skybox_texture(&mut posZ, &fb, 0, 1024);
+    }
+
+    cubemap
+
+}
+
+fn add_skybox_texture<'a>(save_into : &mut SimpleFrameBuffer, src : &SimpleFrameBuffer, x_start : u32, y_start : u32) {
+
+    use glium::{Rect, BlitTarget};
+
+    src.blit_color(
+        &Rect {
+            left : x_start,
+            bottom : y_start,
+            width : 900,
+            height : 900
+        },
+        save_into,
+        &BlitTarget{
+            left : 0,
+            bottom : 0,
+            width : 900,
+            height : 900
+        },
+        glium::uniforms::MagnifySamplerFilter::Linear
+    );
+}
+
 pub fn load_texture(location : &str, display : &glium::Display) -> glium::Texture2d{
     use std::io::Cursor;
     use std::fs::File;
@@ -286,5 +351,47 @@ fn create_shader_program(vertex_shader_path : &str, fragment_shader_path : &str,
     let program = glium::Program::from_source(display, &vertex_shader_src, &fragment_shader_src, None).unwrap();
     return program;
 }
+
+pub fn get_cube_vertex_buffer(display: &mut glium::Display) -> glium::VertexBuffer<Vertex> {
+        let mut vertices = vec![Vertex { position: [-0.5, -0.5, 0.5], uv: [0.0, 1.0], normal : [0.0, 0.0, 0.0] }, //0 back
+                                Vertex { position: [0.5, -0.5, 0.5], uv: [1.0, 1.0], normal : [0.0, 0.0, 0.0]}, //1
+                                Vertex { position: [-0.5, 0.5, 0.5], uv: [0.0, 0.0], normal : [0.0, 0.0, 0.0]}, //2
+                                Vertex { position: [0.5, 0.5, 0.5], uv: [1.0, 0.0], normal : [0.0, 0.0, 0.0]}, //3
+
+                                Vertex { position: [-0.5, 0.5, 0.5], uv: [0.0, 0.0], normal : [0.0, 0.0, 0.0]}, //4 top
+                                Vertex { position: [0.5, 0.5, 0.5], uv: [1.0, 0.0], normal : [0.0, 0.0, 0.0]}, //5
+                                Vertex { position: [-0.5, 0.5, -0.5], uv: [0.0, 1.0], normal : [0.0, 0.0, 0.0]}, //6
+                                Vertex { position: [0.5, 0.5, -0.5], uv: [1.0, 1.0] , normal : [0.0, 0.0, 0.0]}, //7
+
+                                Vertex { position: [-0.5, 0.5, -0.5], uv: [0.0, 0.0], normal : [0.0, 0.0, 0.0]}, //8 front
+                                Vertex { position: [0.5, 0.5, -0.5], uv: [1.0, 0.0], normal : [0.0, 0.0, 0.0]}, //9
+                                Vertex { position: [-0.5, -0.5, -0.5], uv: [0.0, 1.0], normal : [0.0, 0.0, 0.0]}, //10
+                                Vertex { position: [0.5, -0.5, -0.5], uv: [1.0, 1.0], normal : [0.0, 0.0, 0.0]}, //11
+
+                                Vertex { position: [-0.5, -0.5, -0.5], uv: [0.0, 1.0], normal : [0.0, 0.0, 0.0]}, //12 bottom
+                                Vertex { position: [0.5, -0.5, -0.5], uv: [1.0, 1.0], normal : [0.0, 0.0, 0.0]}, //13
+                                Vertex { position: [-0.5, -0.5, 0.5], uv: [0.0, 0.0], normal : [0.0, 0.0, 0.0] }, //14
+                                Vertex { position: [0.5, -0.5, 0.5], uv: [0.0, 1.0], normal : [0.0, 0.0, 0.0]}, //15
+
+                                Vertex { position: [0.5, -0.5, 0.5], uv: [0.0, 1.0], normal : [0.0, 0.0, 0.0]}, //16 right
+                                Vertex { position: [0.5, -0.5, -0.5], uv: [1.0, 1.0], normal : [0.0, 0.0, 0.0]}, //17
+                                Vertex { position: [0.5, 0.5, 0.5], uv: [0.0, 0.0], normal : [0.0, 0.0, 0.0]}, //18
+                                Vertex { position: [0.5, 0.5, -0.5], uv: [1.0, 0.0], normal : [0.0, 0.0, 0.0]}, //19
+
+                                Vertex { position: [-0.5, -0.5, -0.5], uv: [0.0, 1.0], normal : [0.0, 0.0, 0.0]}, //20 left
+                                Vertex { position: [-0.5, -0.5, 0.5], uv: [1.0, 1.0], normal : [0.0, 0.0, 0.0]}, //21
+                                Vertex { position: [-0.5, 0.5, -0.5], uv: [0.0, 0.0], normal : [0.0, 0.0, 0.0]}, //22       
+                                Vertex { position: [-0.5, 0.5, 0.5], uv: [1.0, 0.0], normal : [0.0, 0.0, 0.0] } //23
+                                ];
+        for v in &mut vertices {
+            v.uv[1] = 1.0 - v.uv[1];
+        }
+        glium::VertexBuffer::new(display, &vertices).unwrap()
+    }
+pub fn get_index_buffer(display: &mut glium::Display) -> glium::IndexBuffer<u16> {
+        let indices = vec![0, 1, 2, 2, 1, 3, 4, 5, 6, 6, 5, 7, 8, 9, 10, 10, 9, 11, 12, 13, 14, 14, 13, 15, 16, 17, 18, 18, 17, 19, 20, 21, 22, 22, 21, 23];
+        glium::IndexBuffer::new(display, glium::index::PrimitiveType::TrianglesList, &indices).unwrap()
+    }
+
 
 
