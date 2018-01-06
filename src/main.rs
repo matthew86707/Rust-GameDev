@@ -123,7 +123,7 @@ fn main() {
 
    let mut should_spawn : bool = false;
 
-   water.set_position(250.0, 0.0, 250.0);
+   water.set_position(500.0, 0.0, 500.0);
 
     while !closed {
 
