@@ -192,12 +192,6 @@ let mut world_seed : i32 = 4;
 
         let projection_matrix: [[f32; 4]; 4] = projection_matrix.into();
 
-
-        // let mut view_mat_no_translation : [[f32; 4]; 4] = mainCam.get_view_matrix();
-        // view_mat_no_translation[0][3] = 0.0;
-        // view_mat_no_translation[1][3] = 0.0;
-        // view_mat_no_translation[2][3] = 0.0;
-
         target.draw(&vertex_buffer_skybox, &indices_skybox, &program_skybox, &uniform! {skybox : skybox_sampled, projection_matrix: projection_matrix, view_matrix :  mainCam.get_view_matrix(false)},
             &draw_params).unwrap();
 
