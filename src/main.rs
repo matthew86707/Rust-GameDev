@@ -56,7 +56,7 @@ fn main() {
 
 let mut world_seed : i32 = 4;
 
-  /*  let mut stream = TcpStream::connect("localhost:4242").unwrap();
+   let mut stream = TcpStream::connect("localhost:4242").unwrap();
     
     {
         let mut reader = BufReader::new(&stream);
@@ -67,7 +67,7 @@ let mut world_seed : i32 = 4;
         line.pop();
         world_seed = line.parse::<i32>().unwrap();
     }
-*/
+
 	let shape_terrain = PrimitiveShapes::get_plane(512, 512, world_seed);
 	let vertex_buffer_terrain = glium::VertexBuffer::new(&display, &shape_terrain).unwrap();
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
@@ -146,7 +146,7 @@ let mut world_seed : i32 = 4;
     while !closed {
 
         //Handle networking
-/*
+
         {
         //Format player position
         let position_x_string = mainCam.position[0].to_string();
@@ -183,7 +183,7 @@ let mut world_seed : i32 = 4;
         }
 
         }
-*/
+
         program_counter += 0.00005;
         glow_effect_multiplier = (1.57 + f32::sin(program_counter) / 2.0);
 
