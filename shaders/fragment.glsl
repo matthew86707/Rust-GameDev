@@ -11,13 +11,14 @@ uniform sampler2D snowSampler;
 uniform float time;
 uniform float value;
 uniform vec2 screen_size;
+in float light_location;
 in vec4 positionCoord;
 in vec3 norm;
 
 void main() {
 
 // Get a lighting direction vector from the light to the vertex.
-    vec3 lightVector = normalize(-abs(vec3(35.0, 150.0, 35.0) - positionCoord.xyz));
+    vec3 lightVector = normalize(-abs(vec3(35.0, light_location, 35.0) - positionCoord.xyz));
  
     // Calculate the dot product of the light vector and vertex normal. If the normal and light vector are
     // pointing in the same direction then it will get max illumination.

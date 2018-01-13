@@ -41,13 +41,17 @@ impl Camera{
 	pub fn rotate(&mut self, rotation: nalgebra::Vector3<f32>) {
 		self.rotation += rotation;
 	}
-	pub fn get_view_matrix(&self) -> [[f32; 4]; 4] {
+	pub fn get_view_matrix(&self, should_translate : bool) -> [[f32; 4]; 4] {
 		let mut translation_matrix: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
         let mut rotation_matrix: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+
+        if(should_translate){
 
         translation_matrix[(0, 3)] = self.position[0];
         translation_matrix[(1, 3)] = self.position[1];
         translation_matrix[(2, 3)] = self.position[2];
+
+        }
 
         let mut rotation_matrix_z: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
         let mut rotation_matrix_y: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);

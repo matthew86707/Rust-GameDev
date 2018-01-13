@@ -20,12 +20,13 @@ use std::io::BufWriter;
 use std::io::BufReader;
 use glium::texture::cubemap::{Cubemap};
 use glium::framebuffer::{SimpleFrameBuffer};
+use PrimitiveShapes::Vertex;
 
 
 fn main() {
 
     use UIElement::UIElement;
-    use PrimitiveShapes::Vertex;
+    
     use GameObject::Shape;
     use GameObject::GameObject;
   
@@ -49,13 +50,14 @@ fn main() {
     let texture_rock = load_texture("rock.jpg", &display);
     let water_texture = load_texture("water.jpg", &display);
 
-    let mut cubemap = texture_to_cubemap(&texture, &display);
+    let mut cubemap = texture_to_cubemap(&texture_skybox, &display);
 
 	implement_vertex!(Vertex, position, uv, normal);
 
+let mut world_seed : i32 = 4;
 
-    let mut stream = TcpStream::connect("localhost:4242").unwrap();
-    let mut world_seed : i32;
+  /*  let mut stream = TcpStream::connect("localhost:4242").unwrap();
+    
     {
         let mut reader = BufReader::new(&stream);
         let mut line = String::new();
@@ -65,7 +67,7 @@ fn main() {
         line.pop();
         world_seed = line.parse::<i32>().unwrap();
     }
-
+*/
 	let shape_terrain = PrimitiveShapes::get_plane(512, 512, world_seed);
 	let vertex_buffer_terrain = glium::VertexBuffer::new(&display, &shape_terrain).unwrap();
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
@@ -117,6 +119,10 @@ fn main() {
 
     let mut player_objects : Vec<GameObject> = Vec::new();
 
+    use glium::uniforms::SamplerWrapFunction::Clamp;
+
+    let skybox_sampled = cubemap.sampled().wrap_function(glium::uniforms::SamplerWrapFunction::Clamp);
+
     let mut mx : f64 = 0.0;
     let mut my : f64 = 0.0;
     let mut dx : f64 = 0.0;
@@ -135,10 +141,12 @@ fn main() {
 
    water.set_position(500.0, 0.0, 500.0);
 
+   let mut light_y : f32 = 0.0;
+
     while !closed {
 
         //Handle networking
-
+/*
         {
         //Format player position
         let position_x_string = mainCam.position[0].to_string();
@@ -175,6 +183,7 @@ fn main() {
         }
 
         }
+*/
         program_counter += 0.00005;
         glow_effect_multiplier = (1.57 + f32::sin(program_counter) / 2.0);
 
@@ -184,7 +193,12 @@ fn main() {
         let projection_matrix: [[f32; 4]; 4] = projection_matrix.into();
 
 
-        target.draw(vertex_buffer_skybox, indices_skybox, program_skybox, &uniform! {sampler : cubemap, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix()},
+        // let mut view_mat_no_translation : [[f32; 4]; 4] = mainCam.get_view_matrix();
+        // view_mat_no_translation[0][3] = 0.0;
+        // view_mat_no_translation[1][3] = 0.0;
+        // view_mat_no_translation[2][3] = 0.0;
+
+        target.draw(&vertex_buffer_skybox, &indices_skybox, &program_skybox, &uniform! {skybox : skybox_sampled, projection_matrix: projection_matrix, view_matrix :  mainCam.get_view_matrix(false)},
             &draw_params).unwrap();
 
         if should_spawn {
@@ -194,19 +208,19 @@ fn main() {
 
         for player in &mut player_objects{
             player.recalculateMatrix();
-            target.draw(player.vertex_buffer, &indices, player.program, &uniform! {time : program_counter, transform: player.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix()},
+            target.draw(player.vertex_buffer, &indices, player.program, &uniform! {time : program_counter, transform: player.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
             &draw_params).unwrap();
         }
 
         for gameObject in &mut game_objects{
             gameObject.recalculateMatrix();
-            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! {shading_intensity : shading_intensity, time : program_counter, sampler: gameObject.texture, snowSampler : &snow_texture,rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(), glowEffect : 1.0 as f32},
+            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! {shading_intensity : shading_intensity, time : program_counter, sampler: gameObject.texture, snowSampler : &snow_texture,rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true), glowEffect : 1.0 as f32, light_location : light_y},
             &draw_params).unwrap();
 
         }
 
         water.recalculateMatrix();
-        target.draw(water.vertex_buffer, &indices, water.program, &uniform! {sampler: water.texture, transform: water.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix()},
+        target.draw(water.vertex_buffer, &indices, water.program, &uniform! {sampler: water.texture, transform: water.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
             &draw_params).unwrap();
        
         target.finish().unwrap();
@@ -255,8 +269,8 @@ fn main() {
                                                             },
                         Some(glutin::VirtualKeyCode::Q) => mainCam.translate(nalgebra::Vector3::new(0.75, 0.75, 0.0)),
                         Some(glutin::VirtualKeyCode::E) => mainCam.translate(nalgebra::Vector3::new(0.75, -0.75, 0.0)),
-                        Some(glutin::VirtualKeyCode::X) => {shading_intensity = 0.0},
-                        Some(glutin::VirtualKeyCode::C) => {shading_intensity = 1.0},
+                        Some(glutin::VirtualKeyCode::X) => {light_y = 500.0},
+                        Some(glutin::VirtualKeyCode::C) => {light_y = -100.0},
                 		_ => ()
                 	},
                 	_ => ()
@@ -287,12 +301,12 @@ fn texture_to_cubemap(texture : &glium::Texture2d, display : &glium::Display) ->
     let mut posZ = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::PositiveZ)).unwrap();
 
 
-    add_skybox_texture(&mut negX, &fb, 1024, 1024);
-    add_skybox_texture(&mut posX, &fb, 3072, 1024);
-    add_skybox_texture(&mut negY, &fb, 1024, 0);
-    add_skybox_texture(&mut posY, &fb, 1024, 2048);
-    add_skybox_texture(&mut negZ, &fb, 2048, 1024);
-    add_skybox_texture(&mut posZ, &fb, 0, 1024);
+    add_skybox_texture(&mut posZ, &fb, 1024, 1024);
+    add_skybox_texture(&mut negZ, &fb, 3072, 1024);
+    add_skybox_texture(&mut posY, &fb, 1024, 0);
+    add_skybox_texture(&mut negY, &fb, 1024, 2048);
+    add_skybox_texture(&mut posX, &fb, 2048, 1024);
+    add_skybox_texture(&mut negX, &fb, 0, 1024);
     }
 
     cubemap
@@ -352,7 +366,7 @@ fn create_shader_program(vertex_shader_path : &str, fragment_shader_path : &str,
     return program;
 }
 
-pub fn get_cube_vertex_buffer(display: &mut glium::Display) -> glium::VertexBuffer<Vertex> {
+pub fn get_cube_vertex_buffer(display: &glium::Display) -> glium::VertexBuffer<Vertex> {
         let mut vertices = vec![Vertex { position: [-0.5, -0.5, 0.5], uv: [0.0, 1.0], normal : [0.0, 0.0, 0.0] }, //0 back
                                 Vertex { position: [0.5, -0.5, 0.5], uv: [1.0, 1.0], normal : [0.0, 0.0, 0.0]}, //1
                                 Vertex { position: [-0.5, 0.5, 0.5], uv: [0.0, 0.0], normal : [0.0, 0.0, 0.0]}, //2
@@ -383,12 +397,9 @@ pub fn get_cube_vertex_buffer(display: &mut glium::Display) -> glium::VertexBuff
                                 Vertex { position: [-0.5, 0.5, -0.5], uv: [0.0, 0.0], normal : [0.0, 0.0, 0.0]}, //22       
                                 Vertex { position: [-0.5, 0.5, 0.5], uv: [1.0, 0.0], normal : [0.0, 0.0, 0.0] } //23
                                 ];
-        for v in &mut vertices {
-            v.uv[1] = 1.0 - v.uv[1];
-        }
         glium::VertexBuffer::new(display, &vertices).unwrap()
     }
-pub fn get_index_buffer(display: &mut glium::Display) -> glium::IndexBuffer<u16> {
+pub fn get_index_buffer(display: &glium::Display) -> glium::IndexBuffer<u16> {
         let indices = vec![0, 1, 2, 2, 1, 3, 4, 5, 6, 6, 5, 7, 8, 9, 10, 10, 9, 11, 12, 13, 14, 14, 13, 15, 16, 17, 18, 18, 17, 19, 20, 21, 22, 22, 21, 23];
         glium::IndexBuffer::new(display, glium::index::PrimitiveType::TrianglesList, &indices).unwrap()
     }
