@@ -54,7 +54,7 @@ fn main() {
 
 	implement_vertex!(Vertex, position, uv, normal);
 
-let mut world_seed : i32 = 4;
+    let mut world_seed : i32 = 4;
 
    // let mut stream = TcpStream::connect("localhost:4242").unwrap();
     
@@ -69,7 +69,8 @@ let mut world_seed : i32 = 4;
    //  }
 
 	//let shape_terrain = PrimitiveShapes::get_plane(512, 512, world_seed);
-    let shape_terrain = PrimitiveShapes::get_sphere(60, 60);
+    let shape_terrain = PrimitiveShapes::get_sphere(1024, 1024, true);
+    //let shape_water = PrimitiveShapes::get_sphere(64, 64, false);
 	let vertex_buffer_terrain = glium::VertexBuffer::new(&display, &shape_terrain).unwrap();
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
