@@ -23,6 +23,52 @@ fn get_float_from_vec_map(vector : &mut Vec<Vec<f32>>, x : i32, y : i32) -> f32 
 	}
 }
 
+pub fn get_sphere(rings : i32, ring_divisions : i32) -> Vec<Vertex> {
+	let mut toReturn : Vec<Vertex> = Vec::new();
+	use rand::distributions::{IndependentSample, Range};
+    use noise::{NoiseModule, Perlin};
+    use noise::Seedable;
+	let perlin = Perlin::new();
+	perlin.set_seed(50);
+
+use std;
+	for i in 0..rings{
+		let mut radius : f32 = 30.0;
+		let mut ring_radius : f32 = (1.0 - ((((i as f32 / rings as f32)) * 2.0) - 1.0).powi(2)).sqrt() * radius;
+		let mut lower_ring_radius : f32 = (1.0 - (((((i as f32 - 1.0) / rings as f32)) * 2.0) - 1.0).powi(2)).sqrt() * radius;
+		for j in 0..ring_divisions{
+			
+			use nalgebra::core::Vector3;
+
+			let i : f32 = i as f32;
+			let j : f32 = j as f32;
+
+			let mut noise_strength : f32 = 0.11566;
+
+			let mut one : [f32; 3] = [i + 1.0, ((j as f32 / ring_divisions as f32) * std::f32::consts::PI * 2.0).cos() * ring_radius, ((j as f32 / ring_divisions as f32) * std::f32::consts::PI * 2.0).sin() * ring_radius];
+			let mut two : [f32; 3] = [i, (((j as f32 + 1.0) / ring_divisions as f32) * std::f32::consts::PI * 2.0).cos() * lower_ring_radius, ((((j as f32 + 1.0) / ring_divisions as f32)) * std::f32::consts::PI * 2.0).sin() * lower_ring_radius];
+			let mut three : [f32; 3] = [i, ((j as f32 / ring_divisions as f32) * std::f32::consts::PI * 2.0).cos() * lower_ring_radius, (((j as f32) / ring_divisions as f32) * std::f32::consts::PI * 2.0).sin() * lower_ring_radius];
+			let mut four : [f32; 3] = [i + 1.0, (((j as f32 + 1.0) / ring_divisions as f32) * std::f32::consts::PI * 2.0).cos() * ring_radius, (((j as f32 + 1.0) / ring_divisions as f32) * std::f32::consts::PI * 2.0).sin() * ring_radius];
+
+			one = (Vector3::new(one[0], one[1], one[2]) + (perlin.get([(i + 1.0) * noise_strength, j * noise_strength]) * Vector3::new(one[0], one[1], one[2]).normalize())).into();
+			two = (Vector3::new(two[0], two[1], two[2]) + (perlin.get([i * noise_strength, (j + 1.0) * noise_strength]) * Vector3::new(two[0], two[1], two[2]).normalize())).into();
+			three = (Vector3::new(three[0], three[1], three[2]) + (perlin.get([i * noise_strength, j * noise_strength]) * Vector3::new(three[0], three[1], three[2]).normalize())).into();
+			four = (Vector3::new(four[0], four[1], four[2]) + (perlin.get([(i + 1.0) * noise_strength, (j + 1.0) * noise_strength]) * Vector3::new(four[0], four[1], four[2]).normalize())).into();
+
+			
+			toReturn.push(Vertex { position: one, uv: [ 0.0, 1.0 ], normal : [0.0, 0.0, 0.0] });
+			toReturn.push(Vertex { position: two, uv: [ 1.0, 1.0 ], normal : [0.0, 0.0, 0.0] });
+			toReturn.push(Vertex { position: three, uv: [ 0.0, 0.0 ], normal : [0.0, 0.0, 0.0] });
+
+
+			toReturn.push(Vertex { position: two, uv: [ 1.0, 0.0], normal : [0.0, 0.0, 0.0] });
+			toReturn.push( Vertex { position: one, uv: [ 0.0, 0.0], normal : [0.0, 0.0, 0.0] });
+			toReturn.push( Vertex { position: four, uv: [ 1.0, 1.0 ], normal : [0.0, 0.0, 0.0] });
+		}
+	}
+	return toReturn;
+}
+
 
 pub fn get_plane(sizeX : i32, sizeY : i32, world_seed : i32) -> Vec<Vertex> {
 	let mut toReturn : Vec<Vertex> = Vec::new();
@@ -39,73 +85,14 @@ pub fn get_plane(sizeX : i32, sizeY : i32, world_seed : i32) -> Vec<Vertex> {
 	for i in 0..sizeX{
 		let mut row : Vec<f32> = Vec::new();
 		for j in 0..sizeY{
-		//	let between = Range::new(0, 100);
-   		//	let mut rng : f32 = rand::thread_rng() as f32;
-   		//	let n = (rand::thread_rng().gen_range(0, 200) as f32 / 100.0);
-   		//	let n : f32 = ((between.ind_sample(&mut rng)) / 50.0) as f32;
+
    			row.push(perlin.get([((i as f32) / 80.0) +  0.1, ((j as f32) / 80.0) +  0.1]) * perlin_macro.get([((i as f32) / 180.0) +  0.1, ((j as f32) / 180.0) +  0.1]));
 		}
 		height_map_raw.push(row);
 	}
-	//println!("{:?}", height_map);
-
-	let smoothing_scale_factor : i32 = 4;
-
 
 	let mut height_map = height_map_raw;
     
-	// for i in 0..sizeX * smoothing_scale_factor{
-	// 	let mut row : Vec<f32> = Vec::new();
-	// 	for j in 0..sizeY * smoothing_scale_factor{
-	// 		//if(i % smoothing_scale_factor == 0 && j % smoothing_scale_factor == 0){
-	// 		//	row.push(get_float_from_vec_map(&mut height_map_raw, i, j));
-	// 		//}else{
-	// 			//row.push(0.0);
-	// 			// println!("-----New Vertex-----");
-	// 			 let mut xCoord : f32 = (i as f32 / smoothing_scale_factor as f32);
-	// 			 let mut yCoord : f32 = (j as f32 / smoothing_scale_factor as f32);
-	// 			// println!("xCoord {}", xCoord);
-	// 			// println!("yCoord {}", yCoord);
-	// 			let mut xCoordLowerBlend : f32 = (((xCoord as i32) as f32) + 1.0) - xCoord;
-	// 			 let mut yCoordLowerBlend : f32 = (((yCoord as i32) as f32) + 1.0) - yCoord;
-	// 			let mut xCoordUpperBlend : f32 = xCoord - ((xCoord as i32) as f32);
-	// 			 let mut yCoordUpperBlend : f32 = yCoord - ((yCoord as i32) as f32);
-	// 			// println!("xCoordUpperBlendAmount {}", xCoordUpperBlend);
-	// 			// println!("xCoordLowerBlendAmount {}", xCoordLowerBlend);
-	// 			// println!("yCoordUpperBlendAmount {}", yCoordUpperBlend);
-	// 			// println!("yCoordLowerBlendAmount {}", yCoordLowerBlend);
-	// 			let mut upperXUpperY : f32 = get_float_from_vec_map(&mut height_map_raw, xCoord.ceil() as i32, yCoord.ceil() as i32);
-	// 			let mut lowerXUpperY : f32 = get_float_from_vec_map(&mut height_map_raw, xCoord.floor() as i32, yCoord.ceil() as i32);
-	// 			let mut upperXLowerY : f32 = get_float_from_vec_map(&mut height_map_raw, xCoord.ceil() as i32, yCoord.floor() as i32);
-	// 			let mut lowerXLowerY : f32 = get_float_from_vec_map(&mut height_map_raw, xCoord.floor() as i32, yCoord.floor() as i32);
-	// 			// println!("{} {}", lowerXUpperY, upperXUpperY);
-	// 			// println!("{} {}", lowerXLowerY, upperXLowerY);
-	// 			let mut ourValueX : f32 = (xCoordUpperBlend * ((upperXLowerY + upperXUpperY) / 2.0))  + (xCoordLowerBlend * ((lowerXLowerY + lowerXUpperY) / 2.0));
-	// 			let mut ourValueY : f32 = (yCoordUpperBlend * ((upperXUpperY + lowerXUpperY) / 2.0))  + (yCoordLowerBlend * ((lowerXLowerY + upperXLowerY) / 2.0));
-	// 			let mut ourValue : f32 = 0.0;
-
-
-
-	// 			//if(i % smoothing_scale_factor == 0 && j % smoothing_scale_factor == 0){
-	// 			//	ourValue = get_float_from_vec_map(&mut height_map_raw, i, j);
-	// 			//}
-	// 			//if(i % smoothing_scale_factor == 0){
-	// 			//	ourValue = (ourValueY);
-	// 			//}else if (j % smoothing_scale_factor == 0){
-	// 			//	ourValue = (ourValueX);
-	// 			//}else{
-	// 			ourValue = (ourValueX + ourValueY) / 2.0;
-	// 			//}
-	// 			//println!("ourValue {}", ourValue);
-	// 			row.push(ourValue);
-	// 		}
-	// 		height_map.push(row);
-	// 	}
-		//height_map.push(row);
-	
-		
-
-	//println!("{:?}", height_map);
 
 	//sm = scale multiplier
 	let sm : f32 = 1.0;
@@ -161,13 +148,3 @@ pub fn get_plane(sizeX : i32, sizeY : i32, world_seed : i32) -> Vec<Vertex> {
 	return toReturn;
 }
 
-pub fn get_sphere(divisionsX : i32, divisionY : i32) -> Vec<Vertex> {
-	let vertex1 = Vertex { position: [-1.0, -1.0, -2.0], uv: [ 0.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
-	let vertex2 = Vertex { position: [ 1.0, -1.0, -2.0], uv: [ 1.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
-	let vertex3 = Vertex { position: [ -1.0, 1.0, -2.0], uv: [ 0.0, 0.0 ], normal: [0.0, 0.0, 0.0] };
-
-	let vertex4 = Vertex { position: [1.0, 1.0, -2.0], uv: [ 1.0, 0.0], normal: [0.0, 0.0, 0.0] };
-	let vertex5 = Vertex { position: [ -1.0, 1.0, -2.0], uv: [ 0.0, 0.0], normal: [0.0, 0.0, 0.0] };
-	let vertex6 = Vertex { position: [ 1.0, -1.0, -2.0], uv: [ 1.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
-	vec![vertex1, vertex2, vertex3, vertex4, vertex5, vertex6]
-}

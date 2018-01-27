@@ -43,6 +43,7 @@ impl Camera{
 	}
 	pub fn get_view_matrix(&self, should_translate : bool) -> [[f32; 4]; 4] {
 		let mut translation_matrix: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+        let mut translation_point_matrix: nalgebra::Vector4<f32> = nalgebra::Vector4::new(100.0, 0.0, 0.0, 0.0);
         let mut rotation_matrix: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 
         if(should_translate){
@@ -72,7 +73,6 @@ impl Camera{
         rotation_matrix_x[(1, 0)] = -f32::sin(f32::to_radians(self.rotation[0]));
         rotation_matrix_x[(1, 1)] = f32::cos(f32::to_radians(self.rotation[0]));
 
-        //((rotation_matrix_z * rotation_matrix_y * rotation_matrix_x) * (translation_matrix)).into()
           ((translation_matrix) * (rotation_matrix_z * rotation_matrix_y * rotation_matrix_x)).into()
 	}
 

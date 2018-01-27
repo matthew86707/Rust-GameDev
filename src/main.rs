@@ -56,19 +56,20 @@ fn main() {
 
 let mut world_seed : i32 = 4;
 
-   let mut stream = TcpStream::connect("localhost:4242").unwrap();
+   // let mut stream = TcpStream::connect("localhost:4242").unwrap();
     
-    {
-        let mut reader = BufReader::new(&stream);
-        let mut line = String::new();
-        reader.read_line(&mut line);
+   //  {
+   //      let mut reader = BufReader::new(&stream);
+   //      let mut line = String::new();
+   //      reader.read_line(&mut line);
 
-        println!("World Seed From Server : {}", line);
-        line.pop();
-        world_seed = line.parse::<i32>().unwrap();
-    }
+   //      println!("World Seed From Server : {}", line);
+   //      line.pop();
+   //      world_seed = line.parse::<i32>().unwrap();
+   //  }
 
-	let shape_terrain = PrimitiveShapes::get_plane(512, 512, world_seed);
+	//let shape_terrain = PrimitiveShapes::get_plane(512, 512, world_seed);
+    let shape_terrain = PrimitiveShapes::get_sphere(60, 60);
 	let vertex_buffer_terrain = glium::VertexBuffer::new(&display, &shape_terrain).unwrap();
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
@@ -145,44 +146,44 @@ let mut world_seed : i32 = 4;
 
     while !closed {
 
-        //Handle networking
+        // //Handle networking
 
-        {
-        //Format player position
-        let position_x_string = mainCam.position[0].to_string();
-        let position_y_string = mainCam.position[1].to_string();
-        let position_z_string = mainCam.position[2].to_string();
-        let to_send_string = format!("{}:{}:{}\n", position_x_string, position_y_string, position_z_string);
+        // {
+        // //Format player position
+        // let position_x_string = mainCam.position[0].to_string();
+        // let position_y_string = mainCam.position[1].to_string();
+        // let position_z_string = mainCam.position[2].to_string();
+        // let to_send_string = format!("{}:{}:{}\n", position_x_string, position_y_string, position_z_string);
 
-        //Send player location as TCP packet
-        let _ = stream.write(to_send_string.as_bytes());
-        stream.flush();
-        }
+        // //Send player location as TCP packet
+        // let _ = stream.write(to_send_string.as_bytes());
+        // stream.flush();
+        // }
 
-        //Read player data
-        {
-        let mut reader = BufReader::new(&stream);
-        let mut line = String::new();
-        reader.read_line(&mut line);
+        // //Read player data
+        // {
+        // let mut reader = BufReader::new(&stream);
+        // let mut line = String::new();
+        // reader.read_line(&mut line);
 
-        line.pop();
+        // line.pop();
 
-        let mut data : Vec<&str> = Vec::new(); 
-        data = line.split(":").collect::<Vec<&str>>();;
+        // let mut data : Vec<&str> = Vec::new(); 
+        // data = line.split(":").collect::<Vec<&str>>();;
 
-        if(player_objects.len() < (data.len() / 4)){
-            println!("Adding Player...");
-            for i in  0..(((data.len() / 4) - player_objects.len()) + 1){
-            player_objects.push(GameObject::new(Shape::Plane, &texture, &program_player, &vertex_buffer_player));
-        }
-        }
+        // if(player_objects.len() < (data.len() / 4)){
+        //     println!("Adding Player...");
+        //     for i in  0..(((data.len() / 4) - player_objects.len()) + 1){
+        //     player_objects.push(GameObject::new(Shape::Plane, &texture, &program_player, &vertex_buffer_player));
+        // }
+        // }
 
-        for i in 0..(data.len() / 4)  {
-            let mut player = &mut player_objects.get_mut(i).unwrap();
-            player.set_position(data.get((i * 4) + 1).unwrap().parse::<f32>().unwrap(), data.get((i * 4) + 2).unwrap().parse::<f32>().unwrap(), data.get((i * 4) + 3).unwrap().parse::<f32>().unwrap());
-        }
+        // for i in 0..(data.len() / 4)  {
+        //     let mut player = &mut player_objects.get_mut(i).unwrap();
+        //     player.set_position(data.get((i * 4) + 1).unwrap().parse::<f32>().unwrap(), data.get((i * 4) + 2).unwrap().parse::<f32>().unwrap(), data.get((i * 4) + 3).unwrap().parse::<f32>().unwrap());
+        // }
 
-        }
+        // }
 
         program_counter += 0.00005;
         glow_effect_multiplier = (1.57 + f32::sin(program_counter) / 2.0);
@@ -213,9 +214,9 @@ let mut world_seed : i32 = 4;
 
         }
 
-        water.recalculateMatrix();
-        target.draw(water.vertex_buffer, &indices, water.program, &uniform! {sampler: water.texture, transform: water.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
-            &draw_params).unwrap();
+        //water.recalculateMatrix();
+        //target.draw(water.vertex_buffer, &indices, water.program, &uniform! {sampler: water.texture, transform: water.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
+         //   &draw_params).unwrap();
        
         target.finish().unwrap();
 
@@ -283,24 +284,24 @@ fn texture_to_cubemap(texture : &glium::Texture2d, display : &glium::Display) ->
     use glium::texture::CubeLayer;
 
 
-    let mut cubemap = Cubemap::empty(display, 900).unwrap();
+    let mut cubemap = Cubemap::empty(display, 1024).unwrap();
     {
     let mut fb = texture.as_surface();
 
-    let mut negX = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::NegativeX)).unwrap();
-    let mut posX = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::PositiveX)).unwrap();
-    let mut negY = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::NegativeY)).unwrap();
-    let mut posY = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::PositiveY)).unwrap();
-    let mut negZ = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::NegativeZ)).unwrap();
-    let mut posZ = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::PositiveZ)).unwrap();
+    let mut neg_x = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::NegativeX)).unwrap();
+    let mut pos_x = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::PositiveX)).unwrap();
+    let mut neg_y = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::NegativeY)).unwrap();
+    let mut pos_y = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::PositiveY)).unwrap();
+    let mut neg_z = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::NegativeZ)).unwrap();
+    let mut pos_z = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::PositiveZ)).unwrap();
 
 
-    add_skybox_texture(&mut posZ, &fb, 1024, 1024);
-    add_skybox_texture(&mut negZ, &fb, 3072, 1024);
-    add_skybox_texture(&mut posY, &fb, 1024, 0);
-    add_skybox_texture(&mut negY, &fb, 1024, 2048);
-    add_skybox_texture(&mut posX, &fb, 2048, 1024);
-    add_skybox_texture(&mut negX, &fb, 0, 1024);
+    add_skybox_texture(&mut pos_z, &fb, 1024, 1024);
+    add_skybox_texture(&mut neg_z, &fb, 3072, 1024);
+    add_skybox_texture(&mut pos_y, &fb, 1024, 0);
+    add_skybox_texture(&mut neg_y, &fb, 1024, 2048);
+    add_skybox_texture(&mut pos_x, &fb, 2048, 1024);
+    add_skybox_texture(&mut neg_x, &fb, 0, 1024);
     }
 
     cubemap
@@ -315,15 +316,15 @@ fn add_skybox_texture<'a>(save_into : &mut SimpleFrameBuffer, src : &SimpleFrame
         &Rect {
             left : x_start,
             bottom : y_start,
-            width : 900,
-            height : 900
+            width : 1024,
+            height : 1024
         },
         save_into,
         &BlitTarget{
             left : 0,
             bottom : 0,
-            width : 900,
-            height : 900
+            width : 1024,
+            height : 1024
         },
         glium::uniforms::MagnifySamplerFilter::Linear
     );
