@@ -69,9 +69,10 @@ fn main() {
    //  }
 
 	//let shape_terrain = PrimitiveShapes::get_plane(512, 512, world_seed);
-    let shape_terrain = PrimitiveShapes::get_sphere(1024, 1024, true);
-    //let shape_water = PrimitiveShapes::get_sphere(64, 64, false);
+    let shape_terrain = PrimitiveShapes::get_sphere(64, 64, true);
+    let shape_water = PrimitiveShapes::get_sphere(64, 64, false);
 	let vertex_buffer_terrain = glium::VertexBuffer::new(&display, &shape_terrain).unwrap();
+    let vertex_buffer_water = glium::VertexBuffer::new(&display, &shape_water).unwrap();
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
     let vertex_buffer_skybox = get_cube_vertex_buffer(&display);
@@ -98,7 +99,7 @@ fn main() {
     let vertex5 = Vertex { position: [ -1.0 * scale_a, 2.0 * scale_b, -1.0 * scale_a], uv: [ 0.0, 0.0], normal: [0.0, 0.0, 0.0] };
     let vertex6 = Vertex { position: [ 1.0 * scale_a, 2.0 * scale_b, 1.0 * scale_a], uv: [ 1.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
 
-    let vertex_buffer_water = glium::VertexBuffer::new(&display, &vec![vertex1, vertex2, vertex3, vertex4, vertex5, vertex6]).unwrap();
+    //let vertex_buffer_water = glium::VertexBuffer::new(&display, &vec![vertex1, vertex2, vertex3, vertex4, vertex5, vertex6]).unwrap();
 
 
 	let program = create_shader_program("shaders/vertex.glsl", "shaders/fragment.glsl", &display);
@@ -141,7 +142,7 @@ fn main() {
 
    let mut should_spawn : bool = false;
 
-   water.set_position(500.0, 0.0, 500.0);
+  // water.set_position(500.0, 0.0, 500.0);
 
    let mut light_y : f32 = 0.0;
 
@@ -215,9 +216,9 @@ fn main() {
 
         }
 
-        //water.recalculateMatrix();
-        //target.draw(water.vertex_buffer, &indices, water.program, &uniform! {sampler: water.texture, transform: water.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
-         //   &draw_params).unwrap();
+        water.recalculateMatrix();
+        target.draw(water.vertex_buffer, &indices, water.program, &uniform! {sampler: water.texture, transform: water.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
+            &draw_params).unwrap();
        
         target.finish().unwrap();
 

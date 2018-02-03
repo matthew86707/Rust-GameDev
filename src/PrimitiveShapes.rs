@@ -76,10 +76,10 @@ let d_ring : f32 = 2.0 / (rings - 1) as f32;
 			let i : f32 = i as f32;
 
 		if apply_noise {
-			one = (Vector3::new(one[0], one[1], one[2]) + (perlin.get([i * noise_strength, j * noise_strength]) * 3.0 * Vector3::new(one[0], one[1], one[2]).normalize())).into();
-			two = (Vector3::new(two[0], two[1], two[2]) + (perlin.get([(i + 1.0) * noise_strength, (j + 1.0) * noise_strength]) * 3.0 * Vector3::new(two[0], two[1], two[2]).normalize())).into();
-			three = (Vector3::new(three[0], three[1], three[2]) + (perlin.get([(i + 1.0) * noise_strength, j * noise_strength]) * 3.0 * Vector3::new(three[0], three[1], three[2]).normalize())).into();
-			four = (Vector3::new(four[0], four[1], four[2]) + (perlin.get([i * noise_strength, (j + 1.0) * noise_strength]) * 3.0 * Vector3::new(four[0], four[1], four[2]).normalize())).into();
+			one = (Vector3::new(one[0], one[1], one[2]) + (perlin.get([i * noise_strength, j * noise_strength]) * 1.0 * Vector3::new(one[0], one[1], one[2]).normalize())).into();
+			two = (Vector3::new(two[0], two[1], two[2]) + (perlin.get([(i + 1.0) * noise_strength, (j + 1.0) * noise_strength]) * 1.0 * Vector3::new(two[0], two[1], two[2]).normalize())).into();
+			three = (Vector3::new(three[0], three[1], three[2]) + (perlin.get([(i + 1.0) * noise_strength, j * noise_strength]) * 1.0 * Vector3::new(three[0], three[1], three[2]).normalize())).into();
+			four = (Vector3::new(four[0], four[1], four[2]) + (perlin.get([i * noise_strength, (j + 1.0) * noise_strength]) * 1.0 * Vector3::new(four[0], four[1], four[2]).normalize())).into();
 		}
 			
 			toReturn.push(Vertex { position: one, uv: [ 0.0, 1.0 ], normal : [0.0, 0.0, 0.0] });
