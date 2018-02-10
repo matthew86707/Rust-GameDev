@@ -22,7 +22,7 @@ void main() {
  
     // Calculate the dot product of the light vector and vertex normal. If the normal and light vector are
     // pointing in the same direction then it will get max illumination.
-    float diffuse = clamp(max(dot(norm, lightVector), 0.1) / 10, 0.5, 1.2); 
+    float diffuse = clamp(max(dot(norm, lightVector), 0.1) / 10, 0.3, 1.2); 
 
     float dist = distance(positionCoord, vec4(0.0, 0.0, 0.0, 0.0));
 

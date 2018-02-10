@@ -3,6 +3,19 @@ extern crate noise;
 
 use rand::Rng;
 
+pub struct CollisionTriangle{
+	pub vertex_positions : [[f32 ; 3] ; 3]
+}
+
+impl CollisionTriangle{
+	pub fn new(vertex_one : [f32; 3], vertex_two : [f32; 3], vertex_three : [f32; 3]) -> CollisionTriangle{
+		CollisionTriangle{
+			vertex_positions : [vertex_one, vertex_two, vertex_three]
+		}
+	}
+}
+
+
 
 #[derive(Copy, Clone, Debug)]
 pub struct Vertex {
@@ -23,7 +36,7 @@ fn get_float_from_vec_map(vector : &mut Vec<Vec<f32>>, x : i32, y : i32) -> f32 
 	}
 }
 
-pub fn get_sphere(rings : i32, ring_divisions : i32, apply_noise : bool) -> Vec<Vertex> {
+pub fn get_sphere(rings : i32, ring_divisions : i32, apply_noise : bool, generate_collision : bool, collisionTriangles : &mut Vec<CollisionTriangle>) -> Vec<Vertex> {
 	let mut toReturn : Vec<Vertex> = Vec::new();
 	use rand::distributions::{IndependentSample, Range};
     use noise::{NoiseModule, Perlin};
@@ -89,6 +102,10 @@ let d_ring : f32 = 2.0 / (rings - 1) as f32;
 			toReturn.push(Vertex { position: two, uv: [ 1.0, 0.0], normal : [0.0, 0.0, 0.0] });
 			toReturn.push( Vertex { position: one, uv: [ 0.0, 0.0], normal : [0.0, 0.0, 0.0] });
 			toReturn.push( Vertex { position: four, uv: [ 1.0, 1.0 ], normal : [0.0, 0.0, 0.0] });
+
+			if(generate_collision){
+				//collisionTriangles.push
+			}
 
 			angle += d_angle;
 

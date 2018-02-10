@@ -21,6 +21,7 @@ use std::io::BufReader;
 use glium::texture::cubemap::{Cubemap};
 use glium::framebuffer::{SimpleFrameBuffer};
 use PrimitiveShapes::Vertex;
+use PrimitiveShapes::CollisionTriangle;
 
 
 fn main() {
@@ -45,7 +46,7 @@ fn main() {
     let mut closed = false;
 
 	let texture = load_texture("grass.jpg", &display);
-    let texture_skybox = load_texture("skybox.jpg", &display);
+    let texture_skybox = load_texture("nebula.jpg", &display);
     let snow_texture = load_texture("Snow.jpg", &display);
     let texture_rock = load_texture("rock.jpg", &display);
     let water_texture = load_texture("water.jpg", &display);
@@ -55,6 +56,8 @@ fn main() {
 	implement_vertex!(Vertex, position, uv, normal);
 
     let mut world_seed : i32 = 4;
+
+    let mut collisionTriangles : Vec<CollisionTriangle> = Vec::new();
 
    // let mut stream = TcpStream::connect("localhost:4242").unwrap();
     
@@ -69,8 +72,8 @@ fn main() {
    //  }
 
 	//let shape_terrain = PrimitiveShapes::get_plane(512, 512, world_seed);
-    let shape_terrain = PrimitiveShapes::get_sphere(64, 64, true);
-    let shape_water = PrimitiveShapes::get_sphere(64, 64, false);
+    let shape_terrain = PrimitiveShapes::get_sphere(64, 64, true, true, &mut collisionTriangles);
+    let shape_water = PrimitiveShapes::get_sphere(64, 64, false, false, &mut collisionTriangles);
 	let vertex_buffer_terrain = glium::VertexBuffer::new(&display, &shape_terrain).unwrap();
     let vertex_buffer_water = glium::VertexBuffer::new(&display, &shape_water).unwrap();
 	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
@@ -121,6 +124,8 @@ fn main() {
     let mut water : GameObject = GameObject::new(Shape::Plane, &water_texture, &program_water, &vertex_buffer_water);
 
     let mut player_objects : Vec<GameObject> = Vec::new();
+
+    let mut debug_ping_object : GameObject = GameObject::new(Shape::Plane, &texture, &program_player, &vertex_buffer_player);
 
     use glium::uniforms::SamplerWrapFunction::Clamp;
 
@@ -190,12 +195,18 @@ fn main() {
         program_counter += 0.00005;
         glow_effect_multiplier = (1.57 + f32::sin(program_counter) / 2.0);
 
+        debug_ping_object.translate(0.0005, 0.0, 0.0);
+
         let mut target = display.draw();
         target.clear_color_and_depth((0.25, 0.45, 1.0, 1.0), 1.0);
 
         let projection_matrix: [[f32; 4]; 4] = projection_matrix.into();
 
         target.draw(&vertex_buffer_skybox, &indices_skybox, &program_skybox, &uniform! {skybox : skybox_sampled, projection_matrix: projection_matrix, view_matrix :  mainCam.get_view_matrix(false)},
+            &draw_params).unwrap();
+
+        debug_ping_object.recalculateMatrix();
+        target.draw(debug_ping_object.vertex_buffer, &indices, debug_ping_object.program, &uniform! {time : program_counter, transform: debug_ping_object.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
             &draw_params).unwrap();
 
         if should_spawn {
@@ -264,7 +275,7 @@ fn main() {
                                                                 let right_vec = -mainCam.right();
                                                                 mainCam.translate(right_vec * 1.5)
                                                             },
-                        Some(glutin::VirtualKeyCode::Q) => mainCam.translate(nalgebra::Vector3::new(0.75, 0.75, 0.0)),
+                        Some(glutin::VirtualKeyCode::Q) => {debug_ping_object.set_position(mainCam.position.x, mainCam.position.y, mainCam.position.z)},
                         Some(glutin::VirtualKeyCode::E) => mainCam.translate(nalgebra::Vector3::new(0.75, -0.75, 0.0)),
                         Some(glutin::VirtualKeyCode::X) => {light_y = 500.0},
                         Some(glutin::VirtualKeyCode::C) => {light_y = -100.0},
@@ -298,12 +309,12 @@ fn texture_to_cubemap(texture : &glium::Texture2d, display : &glium::Display) ->
     let mut pos_z = SimpleFrameBuffer::new(display, cubemap.main_level().image(CubeLayer::PositiveZ)).unwrap();
 
 
-    add_skybox_texture(&mut pos_z, &fb, 1024, 1024);
-    add_skybox_texture(&mut neg_z, &fb, 3072, 1024);
-    add_skybox_texture(&mut pos_y, &fb, 1024, 0);
-    add_skybox_texture(&mut neg_y, &fb, 1024, 2048);
-    add_skybox_texture(&mut pos_x, &fb, 2048, 1024);
-    add_skybox_texture(&mut neg_x, &fb, 0, 1024);
+    add_skybox_texture(&mut pos_z, &fb, 0, 0);
+    add_skybox_texture(&mut neg_z, &fb, 0, 0);
+    add_skybox_texture(&mut pos_y, &fb, 0, 0);
+    add_skybox_texture(&mut neg_y, &fb, 0, 0);
+    add_skybox_texture(&mut pos_x, &fb, 0, 0);
+    add_skybox_texture(&mut neg_x, &fb, 0, 0);
     }
 
     cubemap
