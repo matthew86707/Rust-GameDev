@@ -3,19 +3,9 @@ extern crate noise;
 
 use rand::Rng;
 
-pub struct CollisionTriangle{
-	pub vertex_positions : [[f32 ; 3] ; 3]
-}
-
-impl CollisionTriangle{
-	pub fn new(vertex_one : [f32; 3], vertex_two : [f32; 3], vertex_three : [f32; 3]) -> CollisionTriangle{
-		CollisionTriangle{
-			vertex_positions : [vertex_one, vertex_two, vertex_three]
-		}
-	}
-}
-
-
+use ncollide::shape::Triangle;
+use nalgebra::geometry::Point;
+use ncollide::shape::Triangle3;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Vertex {
@@ -36,7 +26,7 @@ fn get_float_from_vec_map(vector : &mut Vec<Vec<f32>>, x : i32, y : i32) -> f32 
 	}
 }
 
-pub fn get_sphere(rings : i32, ring_divisions : i32, apply_noise : bool, generate_collision : bool, collisionTriangles : &mut Vec<CollisionTriangle>) -> Vec<Vertex> {
+pub fn get_sphere(rings : i32, ring_divisions : i32, apply_noise : bool, generate_collision : bool, collisionTriangles : &mut Vec<Triangle3<f32>>) -> Vec<Vertex> {
 	let mut toReturn : Vec<Vertex> = Vec::new();
 	use rand::distributions::{IndependentSample, Range};
     use noise::{NoiseModule, Perlin};
@@ -51,11 +41,6 @@ let d_ring : f32 = 2.0 / (rings - 1) as f32;
 	for i in 0..rings{
 	
 		let mut radius : f32 = 30.0;
-
-		
-		
-		// let mut ring_radius : f32 = (1.0 - ((((ring_x)))).powf(2.0)).sqrt() * radius;
-		// let mut lower_ring_radius : f32 = (1.0 - (((((ring_x + d_ring))))).powf(2.0)).sqrt() * radius;
 
 		let mut ring_radius : f32 = (1.0 - (ring_x).powf(2.0)).sqrt() * radius;
 		let mut lower_ring_radius : f32 = (1.0 - (ring_x + d_ring).powf(2.0)).sqrt() * radius;
@@ -103,8 +88,9 @@ let d_ring : f32 = 2.0 / (rings - 1) as f32;
 			toReturn.push( Vertex { position: one, uv: [ 0.0, 0.0], normal : [0.0, 0.0, 0.0] });
 			toReturn.push( Vertex { position: four, uv: [ 1.0, 1.0 ], normal : [0.0, 0.0, 0.0] });
 
-			if(generate_collision){
-				//collisionTriangles.push
+			if generate_collision {
+				collisionTriangles.push(Triangle3::<f32>::new(Point::from_coordinates(Vector3::<f32>::new(one[0], one[1], one[2])), Point::from_coordinates(Vector3::<f32>::new(two[0], two[1], two[2])), Point::from_coordinates(Vector3::<f32>::new(three[0], three[1], three[2]))));
+				//collisionTriangles.push(Triangle::new(two, one, four));
 			}
 
 			angle += d_angle;

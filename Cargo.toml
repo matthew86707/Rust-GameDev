@@ -6,6 +6,7 @@ authors = ["Lucas Baizer"]
 [dependencies]
 glium = "*"
 image = "*"
-nalgebra = "*"
+nalgebra = "0.13"
 rand = "0.3"
 noise = "*"
+ncollide = "0.13"

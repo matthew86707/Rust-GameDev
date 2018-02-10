@@ -4,6 +4,7 @@ extern crate image;
 extern crate nalgebra;
 extern crate rand;
 extern crate noise;
+extern crate ncollide;
 
 mod GameObject;
 mod Camera;
@@ -21,8 +22,8 @@ use std::io::BufReader;
 use glium::texture::cubemap::{Cubemap};
 use glium::framebuffer::{SimpleFrameBuffer};
 use PrimitiveShapes::Vertex;
-use PrimitiveShapes::CollisionTriangle;
-
+use ncollide::shape::Triangle;
+use ncollide::shape::Triangle3;
 
 fn main() {
 
@@ -57,10 +58,9 @@ fn main() {
 
     let mut world_seed : i32 = 4;
 
-    let mut collisionTriangles : Vec<CollisionTriangle> = Vec::new();
+    let mut collisionTriangles : Vec<Triangle3<f32>> = Vec::new();
 
    // let mut stream = TcpStream::connect("localhost:4242").unwrap();
-    
    //  {
    //      let mut reader = BufReader::new(&stream);
    //      let mut line = String::new();
@@ -152,6 +152,12 @@ fn main() {
    let mut light_y : f32 = 0.0;
 
     while !closed {
+
+        //Collision testing
+        for i..collisionTriangles.len() {
+            let triangle = collisionTriangles[i];
+            triangle.intersects_ray()
+        }
 
         // //Handle networking
 
