@@ -24,6 +24,7 @@ use glium::framebuffer::{SimpleFrameBuffer};
 use PrimitiveShapes::Vertex;
 use ncollide::shape::Triangle;
 use ncollide::shape::Triangle3;
+use ncollide::query::Ray;
 
 fn main() {
 
@@ -81,13 +82,13 @@ fn main() {
     let vertex_buffer_skybox = get_cube_vertex_buffer(&display);
     let indices_skybox = get_index_buffer(&display);
 
-    let vertex1 = Vertex { position: [-1.0, -1.0, -2.0], uv: [ 0.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
-    let vertex2 = Vertex { position: [ 1.0, -1.0, -2.0], uv: [ 1.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
-    let vertex3 = Vertex { position: [ -1.0, 1.0, -2.0], uv: [ 0.0, 0.0 ], normal: [0.0, 0.0, 0.0] };
+    let vertex1 = Vertex { position: [-10.0, -10.0, -2.0], uv: [ 0.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
+    let vertex2 = Vertex { position: [ 1.0, -10.0, -2.0], uv: [ 1.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
+    let vertex3 = Vertex { position: [ -10.0, 1.0, -2.0], uv: [ 0.0, 0.0 ], normal: [0.0, 0.0, 0.0] };
 
     let vertex4 = Vertex { position: [1.0, 1.0, -2.0], uv: [ 1.0, 0.0], normal: [0.0, 0.0, 0.0] };
-    let vertex5 = Vertex { position: [ -1.0, 1.0, -2.0], uv: [ 0.0, 0.0], normal: [0.0, 0.0, 0.0] };
-    let vertex6 = Vertex { position: [ 1.0, -1.0, -2.0], uv: [ 1.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
+    let vertex5 = Vertex { position: [ -10.0, 1.0, -2.0], uv: [ 0.0, 0.0], normal: [0.0, 0.0, 0.0] };
+    let vertex6 = Vertex { position: [ 1.0, -10.0, -2.0], uv: [ 1.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
 
     let vertex_buffer_player = glium::VertexBuffer::new(&display, &vec![vertex1, vertex2, vertex3, vertex4, vertex5, vertex6]).unwrap();
 
@@ -150,13 +151,38 @@ fn main() {
   // water.set_position(500.0, 0.0, 500.0);
 
    let mut light_y : f32 = 0.0;
+   
+  
+   use ncollide::query::RayCast;
+   use nalgebra::geometry::Rotation;
+   use ncollide::math::Isometry;
+   use nalgebra::geometry::Rotation3;
+   use nalgebra::core::Vector3;
+   use nalgebra::geometry::Point3;
+   use ncollide::query::RayIntersection;
+   use ncollide::query::RayIntersection3;
+   
+   let mut intersection_counter : i32 = 0;
+   let mut counter : i32 = 0;
 
     while !closed {
+        counter = counter + 1;
+        let mut vision_ray = Ray::<Point3<f32>> {
+            origin : Point3::from_coordinates(mainCam.position),
+            dir : mainCam.forward()
+        };
 
         //Collision testing
-        for i..collisionTriangles.len() {
-            let triangle = collisionTriangles[i];
-            triangle.intersects_ray()
+        if counter > 800 {
+        for i in 0..8000 as usize {
+            let triangle = &collisionTriangles[i];
+            match triangle.toi_and_normal_with_ray(&Rotation3::identity(), &vision_ray, true) {
+                Some(n) => {println!("Collision!  {}", i); debug_ping_object.set_position(((vision_ray.origin + vision_ray.dir) * n.toi).x, ((vision_ray.origin + vision_ray.dir) * n.toi).y, ((vision_ray.origin + vision_ray.dir) * n.toi).z); 
+                println!("{}, {}, {}", ((vision_ray.origin + vision_ray.dir) * n.toi).x, ((vision_ray.origin + vision_ray.dir) * n.toi).y, ((vision_ray.origin + vision_ray.dir) * n.toi).z);},
+                None => {}
+            }
+        }
+            counter = 0;
         }
 
         // //Handle networking
@@ -201,7 +227,7 @@ fn main() {
         program_counter += 0.00005;
         glow_effect_multiplier = (1.57 + f32::sin(program_counter) / 2.0);
 
-        debug_ping_object.translate(0.0005, 0.0, 0.0);
+        //debug_ping_object.translate(0.0005, 0.0, 0.0);
 
         let mut target = display.draw();
         target.clear_color_and_depth((0.25, 0.45, 1.0, 1.0), 1.0);
@@ -233,9 +259,9 @@ fn main() {
 
         }
 
-        water.recalculateMatrix();
-        target.draw(water.vertex_buffer, &indices, water.program, &uniform! {sampler: water.texture, transform: water.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
-            &draw_params).unwrap();
+       // water.recalculateMatrix();
+       // target.draw(water.vertex_buffer, &indices, water.program, &uniform! {sampler: water.texture, transform: water.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
+       //     &draw_params).unwrap();
        
         target.finish().unwrap();
 
@@ -283,7 +309,7 @@ fn main() {
                                                             },
                         Some(glutin::VirtualKeyCode::Q) => {debug_ping_object.set_position(mainCam.position.x, mainCam.position.y, mainCam.position.z)},
                         Some(glutin::VirtualKeyCode::E) => mainCam.translate(nalgebra::Vector3::new(0.75, -0.75, 0.0)),
-                        Some(glutin::VirtualKeyCode::X) => {light_y = 500.0},
+                        Some(glutin::VirtualKeyCode::X) => {},
                         Some(glutin::VirtualKeyCode::C) => {light_y = -100.0},
                 		_ => ()
                 	},

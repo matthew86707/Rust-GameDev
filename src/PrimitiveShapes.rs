@@ -90,6 +90,7 @@ let d_ring : f32 = 2.0 / (rings - 1) as f32;
 
 			if generate_collision {
 				collisionTriangles.push(Triangle3::<f32>::new(Point::from_coordinates(Vector3::<f32>::new(one[0], one[1], one[2])), Point::from_coordinates(Vector3::<f32>::new(two[0], two[1], two[2])), Point::from_coordinates(Vector3::<f32>::new(three[0], three[1], three[2]))));
+				collisionTriangles.push(Triangle3::<f32>::new(Point::from_coordinates(Vector3::<f32>::new(two[0], two[1], two[2])), Point::from_coordinates(Vector3::<f32>::new(one[0], one[1], one[2])), Point::from_coordinates(Vector3::<f32>::new(four[0], four[1], four[2]))));
 				//collisionTriangles.push(Triangle::new(two, one, four));
 			}
 
