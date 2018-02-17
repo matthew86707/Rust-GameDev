@@ -9,7 +9,8 @@ pub struct Camera{
 	
 	pub rotation: nalgebra::Vector3<f32>,
 	pub position: nalgebra::Vector3<f32>,
-	pub transform: [[f32; 4]; 4]
+	pub transform: [[f32; 4]; 4],
+    pub rotation_center : Option<nalgebra::Vector3<f32>>
 }
 
 impl Camera{
@@ -28,11 +29,14 @@ impl Camera{
 			
 			position: nalgebra::Vector3::new(0.0, 0.0, 0.0),
 			rotation: nalgebra::Vector3::new(0.0, 0.0, 0.0),
-			transform : transform
+			transform : transform,
+            rotation_center : None
 		}
 	}
 	
-
+    pub fn set_rotation_center(&mut self, center : nalgebra::Vector3<f32>){
+        self.rotation_center = Some(center);
+    }
 
 	pub fn translate(&mut self, translation: nalgebra::Vector3<f32>) {
 		self.position += translation;
@@ -73,7 +77,7 @@ impl Camera{
         rotation_matrix_x[(1, 0)] = -f32::sin(f32::to_radians(self.rotation[0]));
         rotation_matrix_x[(1, 1)] = f32::cos(f32::to_radians(self.rotation[0]));
 
-          ((translation_matrix) * (rotation_matrix_z * rotation_matrix_y * rotation_matrix_x)).into()
+            ((translation_matrix) * (rotation_matrix_z * rotation_matrix_y * rotation_matrix_x)).into()
 	}
 
     pub fn get_view_matrix_as_matrix(&self) -> nalgebra::Matrix4<f32> {

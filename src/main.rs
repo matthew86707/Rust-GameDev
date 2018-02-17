@@ -165,6 +165,8 @@ fn main() {
    let mut intersection_counter : i32 = 0;
    let mut counter : i32 = 0;
 
+   let mut glow_position : [f32; 3] = [0.0, 0.0, 0.0];
+
     while !closed {
         counter = counter + 1;
         let mut vision_ray = Ray::<Point3<f32>> {
@@ -172,18 +174,7 @@ fn main() {
             dir : mainCam.forward()
         };
 
-        //Collision testing
-        if counter > 800 {
-        for i in 0..8000 as usize {
-            let triangle = &collisionTriangles[i];
-            match triangle.toi_and_normal_with_ray(&Rotation3::identity(), &vision_ray, true) {
-                Some(n) => {println!("Collision!  {}", i); debug_ping_object.set_position(((vision_ray.origin + vision_ray.dir) * n.toi).x, ((vision_ray.origin + vision_ray.dir) * n.toi).y, ((vision_ray.origin + vision_ray.dir) * n.toi).z); 
-                println!("{}, {}, {}", ((vision_ray.origin + vision_ray.dir) * n.toi).x, ((vision_ray.origin + vision_ray.dir) * n.toi).y, ((vision_ray.origin + vision_ray.dir) * n.toi).z);},
-                None => {}
-            }
-        }
-            counter = 0;
-        }
+  
 
         // //Handle networking
 
@@ -225,7 +216,10 @@ fn main() {
         // }
 
         program_counter += 0.00005;
-        glow_effect_multiplier = (1.57 + f32::sin(program_counter) / 2.0);
+
+        if glow_effect_multiplier > 0.0 {
+        glow_effect_multiplier = glow_effect_multiplier - 0.0005;
+        }
 
         //debug_ping_object.translate(0.0005, 0.0, 0.0);
 
@@ -237,9 +231,9 @@ fn main() {
         target.draw(&vertex_buffer_skybox, &indices_skybox, &program_skybox, &uniform! {skybox : skybox_sampled, projection_matrix: projection_matrix, view_matrix :  mainCam.get_view_matrix(false)},
             &draw_params).unwrap();
 
-        debug_ping_object.recalculateMatrix();
-        target.draw(debug_ping_object.vertex_buffer, &indices, debug_ping_object.program, &uniform! {time : program_counter, transform: debug_ping_object.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
-            &draw_params).unwrap();
+      //  debug_ping_object.recalculateMatrix();
+     //   target.draw(debug_ping_object.vertex_buffer, &indices, debug_ping_object.program, &uniform! {time : program_counter, transform: debug_ping_object.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
+      //      &draw_params).unwrap();
 
         if should_spawn {
             game_objects.push(GameObject::new(Shape::Plane, &texture, &program, &vertex_buffer_terrain));
@@ -248,13 +242,13 @@ fn main() {
 
         for player in &mut player_objects{
             player.recalculateMatrix();
-            target.draw(player.vertex_buffer, &indices, player.program, &uniform! {time : program_counter, transform: player.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
+            target.draw(player.vertex_buffer, &indices, player.program, &uniform! { time : program_counter, transform: player.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
             &draw_params).unwrap();
         }
 
         for gameObject in &mut game_objects{
             gameObject.recalculateMatrix();
-            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! {shading_intensity : shading_intensity, time : program_counter, sampler: gameObject.texture, snowSampler : &snow_texture,rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true), glowEffect : 1.0 as f32, light_location : light_y},
+            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! {glowPosition : glow_position, shading_intensity : shading_intensity, time : program_counter, sampler: gameObject.texture, snowSampler : &snow_texture,rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true), glowEffect : glow_effect_multiplier, light_location : light_y},
             &draw_params).unwrap();
 
         }
@@ -277,6 +271,18 @@ fn main() {
                     my = position.1;
                     mainCam.rotate(nalgebra::Vector3::new(0.0, 0.0, (dx as f32 / 3.0)));
                     mainCam.rotate(nalgebra::Vector3::new(0.0, (dy as f32 / 3.0), 0.0));
+                },
+                glutin::WindowEvent::MouseInput {button, ..} => {
+                      for i in 0..8000 as usize {
+            let triangle = &collisionTriangles[i];
+            match triangle.toi_and_normal_with_ray(&Rotation3::identity(), &vision_ray, true) {
+                Some(n) => {println!("Collision!  {}", i); debug_ping_object.set_position((vision_ray.origin + vision_ray.dir * n.toi).x, (vision_ray.origin + vision_ray.dir * n.toi).y, (vision_ray.origin + vision_ray.dir * n.toi).z); 
+                println!("{}, {}, {}", (vision_ray.origin + vision_ray.dir * n.toi).x, (vision_ray.origin + vision_ray.dir * n.toi).y, (vision_ray.origin + vision_ray.dir * n.toi).z);
+                glow_position = [(vision_ray.origin + vision_ray.dir * n.toi).x, (vision_ray.origin + vision_ray.dir * n.toi).y, (vision_ray.origin + vision_ray.dir * n.toi).z]; glow_effect_multiplier = 1.0; break;},
+                None => {}
+            }
+        }
+         
                 },
                 	glutin::WindowEvent::Closed => closed = true,
                 	glutin::WindowEvent::KeyboardInput { input, .. } => match input.virtual_keycode {

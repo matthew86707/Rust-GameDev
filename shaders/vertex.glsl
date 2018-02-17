@@ -5,6 +5,9 @@ uniform mat4 projection_matrix;
 uniform mat4 view_matrix;
 uniform float shading_intensity;
 
+in float glow_time;
+in vec3 glow_position;
+
 out float shading_i;
 out vec4 positionCoord;
 in vec3 position;

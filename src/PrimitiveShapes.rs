@@ -79,14 +79,36 @@ let d_ring : f32 = 2.0 / (rings - 1) as f32;
 			three = (Vector3::new(three[0], three[1], three[2]) + (perlin.get([(i + 1.0) * noise_strength, j * noise_strength]) * 1.0 * Vector3::new(three[0], three[1], three[2]).normalize())).into();
 			four = (Vector3::new(four[0], four[1], four[2]) + (perlin.get([i * noise_strength, (j + 1.0) * noise_strength]) * 1.0 * Vector3::new(four[0], four[1], four[2]).normalize())).into();
 		}
-			
-			toReturn.push(Vertex { position: one, uv: [ 0.0, 1.0 ], normal : [0.0, 0.0, 0.0] });
-			toReturn.push(Vertex { position: two, uv: [ 1.0, 1.0 ], normal : [0.0, 0.0, 0.0] });
-			toReturn.push(Vertex { position: three, uv: [ 0.0, 0.0 ], normal : [0.0, 0.0, 0.0] });
 
-			toReturn.push(Vertex { position: two, uv: [ 1.0, 0.0], normal : [0.0, 0.0, 0.0] });
-			toReturn.push( Vertex { position: one, uv: [ 0.0, 0.0], normal : [0.0, 0.0, 0.0] });
-			toReturn.push( Vertex { position: four, uv: [ 1.0, 1.0 ], normal : [0.0, 0.0, 0.0] });
+			let mut triangleOneNormal : [f32; 3] = [0.0, 0.0, 0.0];
+			let mut triangleTwoNormal : [f32; 3] = [0.0, 0.0, 0.0];
+
+			let point1A : Vector3<f32> = Vector3::new(one[0], one[1], one[2]);
+			let point1B : Vector3<f32> = Vector3::new(two[0], two[1], two[2]);
+			let point1C : Vector3<f32> = Vector3::new(three[0], three[1], three[2]);
+
+			let U : Vector3<f32> = point1B - point1A;
+			let V : Vector3<f32> = point1C - point1A;
+
+			triangleOneNormal = U.cross(&V).into();
+
+			let point2A : Vector3<f32> = Vector3::new(two[0], two[1], two[2]);
+			let point2B : Vector3<f32> = Vector3::new(one[0], one[1], one[2]);
+			let point2C : Vector3<f32> = Vector3::new(four[0], four[1], four[2]);
+
+			let X : Vector3<f32> = point1B - point1A;
+			let Y : Vector3<f32> = point1C - point1A;
+
+			triangleTwoNormal = X.cross(&Y).into();
+
+			
+			toReturn.push(Vertex { position: one, uv: [ 0.0, 1.0 ], normal : triangleOneNormal });
+			toReturn.push(Vertex { position: two, uv: [ 1.0, 1.0 ], normal : triangleOneNormal });
+			toReturn.push(Vertex { position: three, uv: [ 0.0, 0.0 ], normal : triangleOneNormal });
+
+			toReturn.push(Vertex { position: two, uv: [ 1.0, 0.0], normal : triangleTwoNormal });
+			toReturn.push( Vertex { position: one, uv: [ 0.0, 0.0], normal : triangleTwoNormal });
+			toReturn.push( Vertex { position: four, uv: [ 1.0, 1.0 ], normal : triangleTwoNormal });
 
 			if generate_collision {
 				collisionTriangles.push(Triangle3::<f32>::new(Point::from_coordinates(Vector3::<f32>::new(one[0], one[1], one[2])), Point::from_coordinates(Vector3::<f32>::new(two[0], two[1], two[2])), Point::from_coordinates(Vector3::<f32>::new(three[0], three[1], three[2]))));
