@@ -167,6 +167,8 @@ fn main() {
 
    let mut glow_position : [f32; 3] = [0.0, 0.0, 0.0];
 
+   mainCam.set_rotation_scale(5.0);
+
     while !closed {
         counter = counter + 1;
         let mut vision_ray = Ray::<Point3<f32>> {
@@ -253,9 +255,9 @@ fn main() {
 
         }
 
-       // water.recalculateMatrix();
-       // target.draw(water.vertex_buffer, &indices, water.program, &uniform! {sampler: water.texture, transform: water.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
-       //     &draw_params).unwrap();
+        water.recalculateMatrix();
+        target.draw(water.vertex_buffer, &indices, water.program, &uniform! {sampler: water.texture, transform: water.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
+            &draw_params).unwrap();
        
         target.finish().unwrap();
 
@@ -273,21 +275,26 @@ fn main() {
                     mainCam.rotate(nalgebra::Vector3::new(0.0, (dy as f32 / 3.0), 0.0));
                 },
                 glutin::WindowEvent::MouseInput {button, ..} => {
-                      for i in 0..8000 as usize {
-            let triangle = &collisionTriangles[i];
-            match triangle.toi_and_normal_with_ray(&Rotation3::identity(), &vision_ray, true) {
-                Some(n) => {println!("Collision!  {}", i); debug_ping_object.set_position((vision_ray.origin + vision_ray.dir * n.toi).x, (vision_ray.origin + vision_ray.dir * n.toi).y, (vision_ray.origin + vision_ray.dir * n.toi).z); 
-                println!("{}, {}, {}", (vision_ray.origin + vision_ray.dir * n.toi).x, (vision_ray.origin + vision_ray.dir * n.toi).y, (vision_ray.origin + vision_ray.dir * n.toi).z);
-                glow_position = [(vision_ray.origin + vision_ray.dir * n.toi).x, (vision_ray.origin + vision_ray.dir * n.toi).y, (vision_ray.origin + vision_ray.dir * n.toi).z]; glow_effect_multiplier = 1.0; break;},
+            let mut toi : f32 = std::f32::MAX;
+            for i in 0..8000 as usize {
+            
+                let triangle = &collisionTriangles[i];
+                match triangle.toi_and_normal_with_ray(&Rotation3::identity(), &vision_ray, true) {
+                Some(n) => {
+                    if(n.toi < toi){
+                    println!("Collision!  {}", i); 
+                    println!("{}, {}, {}", (vision_ray.origin + vision_ray.dir * n.toi).x, (vision_ray.origin + vision_ray.dir * n.toi).y, (vision_ray.origin + vision_ray.dir * n.toi).z);
+                    glow_position = [(vision_ray.origin + vision_ray.dir * n.toi).x, (vision_ray.origin + vision_ray.dir * n.toi).y, (vision_ray.origin + vision_ray.dir * n.toi).z]; glow_effect_multiplier = 1.0; 
+                    toi = n.toi;
+                    }
+                },
                 None => {}
             }
         }
-         
                 },
                 	glutin::WindowEvent::Closed => closed = true,
                 	glutin::WindowEvent::KeyboardInput { input, .. } => match input.virtual_keycode {
                 		Some(glutin::VirtualKeyCode::Escape) => closed = true,
-
                         Some(glutin::VirtualKeyCode::P) => {should_spawn = true;},
                         Some(glutin::VirtualKeyCode::O) => {should_spawn = true;},
                         Some(glutin::VirtualKeyCode::Z) => {

@@ -22,9 +22,12 @@ void main() {
     // Get a lighting direction vector from the light to the vertex.
     vec3 lightVector = normalize(vec3(35.0, 0.0, 500.0) - positionCoord.xyz);
  
+    vec3 newNormal = normalize(positionCoord).xyz;
+
     // Calculate the dot product of the light vector and vertex normal. If the normal and light vector are
     // pointing in the same direction then it will get max illumination.
-    float diffuse = clamp(max(dot(norm, lightVector), 0.1) / 4, 0.3, 1.2); 
+    float diffuse = max(dot(newNormal, lightVector), 0.1);
+    //float diffuse = clamp(max(dot(newNormal, lightVector), 0.1) / 4, 0.3, 1.2); 
 
     float dist = distance(positionCoord, vec4(0.0, 0.0, 0.0, 0.0));
 

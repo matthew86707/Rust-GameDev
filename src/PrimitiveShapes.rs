@@ -101,7 +101,6 @@ let d_ring : f32 = 2.0 / (rings - 1) as f32;
 
 			triangleTwoNormal = X.cross(&Y).into();
 
-			
 			toReturn.push(Vertex { position: one, uv: [ 0.0, 1.0 ], normal : triangleOneNormal });
 			toReturn.push(Vertex { position: two, uv: [ 1.0, 1.0 ], normal : triangleOneNormal });
 			toReturn.push(Vertex { position: three, uv: [ 0.0, 0.0 ], normal : triangleOneNormal });
