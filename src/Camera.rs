@@ -37,7 +37,7 @@ impl Camera{
 	}
 
     pub fn update_position(&mut self){
-        self.position += current_velocity;
+        self.position += self.current_velocity;
     }
 	
     pub fn set_rotation_scale(&mut self, scale : f32){
@@ -55,7 +55,7 @@ impl Camera{
 	pub fn rotate(&mut self, rotation: nalgebra::Vector3<f32>) {
 		self.rotation += rotation;
 	}
-    
+
 	pub fn get_view_matrix(&self, should_translate : bool) -> [[f32; 4]; 4] {
 		let mut translation_matrix: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
         let mut translation_point_matrix: nalgebra::Vector4<f32> = nalgebra::Vector4::new(100.0, 0.0, 0.0, 0.0);
