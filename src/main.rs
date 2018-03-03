@@ -57,7 +57,7 @@ fn main() {
 
 	implement_vertex!(Vertex, position, uv, normal);
 
-    let mut world_seed : i32 = 4;
+    let mut world_seed : i32 = 8;
 
     let mut collisionTriangles : Vec<Triangle3<f32>> = Vec::new();
 
@@ -148,8 +148,6 @@ fn main() {
 
    let mut should_spawn : bool = false;
 
-  // water.set_position(500.0, 0.0, 500.0);
-
    let mut light_y : f32 = 0.0;
    
   
@@ -169,6 +167,9 @@ fn main() {
 
    mainCam.set_rotation_scale(5.0);
 
+   let mut light_pos : [f32; 3] = [0.0, 135.0, -5.0];
+   let light_radius : f32 = 100.0;
+
     while !closed {
         counter = counter + 1;
         let mut vision_ray = Ray::<Point3<f32>> {
@@ -176,7 +177,7 @@ fn main() {
             dir : mainCam.forward()
         };
 
-  
+        light_pos = [f32::sin(program_counter) * light_radius, f32::cos(program_counter) * light_radius, -5.0];
 
         // //Handle networking
 
@@ -217,7 +218,7 @@ fn main() {
 
         // }
 
-        program_counter += 0.00005;
+        program_counter += 0.0005;
 
         if glow_effect_multiplier > 0.0 {
         glow_effect_multiplier = glow_effect_multiplier - 0.0005;
@@ -250,13 +251,13 @@ fn main() {
 
         for gameObject in &mut game_objects{
             gameObject.recalculateMatrix();
-            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! {glowPosition : glow_position, shading_intensity : shading_intensity, time : program_counter, sampler: gameObject.texture, snowSampler : &snow_texture,rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true), glowEffect : glow_effect_multiplier, light_location : light_y},
+            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! {light_position : light_pos, glowPosition : glow_position, shading_intensity : shading_intensity, time : program_counter, sampler: gameObject.texture, snowSampler : &snow_texture,rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true), glowEffect : glow_effect_multiplier, light_location : light_y},
             &draw_params).unwrap();
 
         }
 
         water.recalculateMatrix();
-        target.draw(water.vertex_buffer, &indices, water.program, &uniform! {sampler: water.texture, transform: water.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
+        target.draw(water.vertex_buffer, &indices, water.program, &uniform! {light_position : light_pos, sampler: water.texture, transform: water.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
             &draw_params).unwrap();
        
         target.finish().unwrap();

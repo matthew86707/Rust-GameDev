@@ -64,8 +64,6 @@ let d_ring : f32 = 2.0 / (rings - 1) as f32;
 
 			let mut noise_strength : f32 = 0.11566;
 
-		
-
 			let mut one : [f32; 3] = [ring_x * radius, angle.cos() * ring_radius, angle.sin() * ring_radius];
 			let mut two : [f32; 3] = [(ring_x + d_ring) * radius, next_angle.cos() * lower_ring_radius, next_angle.sin() * lower_ring_radius];
 			let mut three : [f32; 3] = [(ring_x + d_ring) * radius, angle.cos() * lower_ring_radius, angle.sin() * lower_ring_radius];
@@ -101,24 +99,33 @@ let d_ring : f32 = 2.0 / (rings - 1) as f32;
 
 			triangleTwoNormal = X.cross(&Y).into();
 
-			toReturn.push(Vertex { position: one, uv: [ 0.0, 1.0 ], normal : triangleOneNormal });
-			toReturn.push(Vertex { position: two, uv: [ 1.0, 1.0 ], normal : triangleOneNormal });
-			toReturn.push(Vertex { position: three, uv: [ 0.0, 0.0 ], normal : triangleOneNormal });
+			let mut point_one_uv = [0.0, 0.0];
+			let mut point_two_uv = [0.0, 0.0];
+			let mut point_three_uv = [0.0, 0.0];
+			let mut point_four_uv = [0.0, 0.0];
 
-			toReturn.push(Vertex { position: two, uv: [ 1.0, 0.0], normal : triangleTwoNormal });
-			toReturn.push( Vertex { position: one, uv: [ 0.0, 0.0], normal : triangleTwoNormal });
-			toReturn.push( Vertex { position: four, uv: [ 1.0, 1.0 ], normal : triangleTwoNormal });
+			let mut texture_scale_factor : f32 = 4.0;
+
+			point_one_uv = [point1A.normalize().x.asin() * texture_scale_factor, point1A.normalize().y.asin() * texture_scale_factor];
+			point_two_uv = [point1B.normalize().x.asin() * texture_scale_factor, point1B.normalize().y.asin() * texture_scale_factor];
+			point_three_uv = [point1C.normalize().x.asin() * texture_scale_factor, point1C.normalize().y.asin() * texture_scale_factor];
+			point_four_uv = [point2C.normalize().x.asin() * texture_scale_factor, point2C.normalize().y.asin() * texture_scale_factor];
+
+			toReturn.push(Vertex { position: one, uv: point_one_uv, normal : triangleOneNormal });
+			toReturn.push(Vertex { position: two, uv: point_two_uv, normal : triangleOneNormal });
+			toReturn.push(Vertex { position: three, uv: point_three_uv, normal : triangleOneNormal });
+
+			toReturn.push(Vertex { position: two, uv: point_two_uv, normal : triangleTwoNormal });
+			toReturn.push( Vertex { position: one, uv: point_one_uv, normal : triangleTwoNormal });
+			toReturn.push( Vertex { position: four, uv: point_four_uv, normal : triangleTwoNormal });
 
 			if generate_collision {
 				collisionTriangles.push(Triangle3::<f32>::new(Point::from_coordinates(Vector3::<f32>::new(one[0], one[1], one[2])), Point::from_coordinates(Vector3::<f32>::new(two[0], two[1], two[2])), Point::from_coordinates(Vector3::<f32>::new(three[0], three[1], three[2]))));
 				collisionTriangles.push(Triangle3::<f32>::new(Point::from_coordinates(Vector3::<f32>::new(two[0], two[1], two[2])), Point::from_coordinates(Vector3::<f32>::new(one[0], one[1], one[2])), Point::from_coordinates(Vector3::<f32>::new(four[0], four[1], four[2]))));
 				//collisionTriangles.push(Triangle::new(two, one, four));
 			}
-
 			angle += d_angle;
-
 		}
-
 		ring_x += d_ring;
 	}
 	println!("Radius : {}", max_ring_radius);

@@ -12,7 +12,7 @@ uniform sampler2D snowSampler;
 uniform float time;
 uniform float value;
 uniform vec2 screen_size;
-
+uniform vec3 light_position;
 
 in vec4 positionCoord;
 in vec3 norm;
@@ -20,7 +20,7 @@ in vec3 norm;
 void main() {
     float glowEffectNew = clamp(glowEffect * (5.0 / distance(vec4(glowPosition, 0.0), positionCoord)), 0.5, 5.0);
     // Get a lighting direction vector from the light to the vertex.
-    vec3 lightVector = normalize(vec3(35.0, 0.0, 500.0) - positionCoord.xyz);
+    vec3 lightVector = normalize(light_position - positionCoord.xyz);
  
     vec3 newNormal = normalize(positionCoord).xyz;
 
