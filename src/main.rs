@@ -10,6 +10,7 @@ mod GameObject;
 mod Camera;
 mod PrimitiveShapes;
 mod UIElement;
+mod Quaternion;
 
 use glium::{glutin, Surface};
 use std::io::Cursor;
@@ -182,7 +183,7 @@ fn main() {
         //Handle networking
 
         {
-        println!("Getting player pos");
+        println!("Getting light pos");
         //Format player position
         let position_x_string = glow_position[0].to_string();
         let position_y_string = glow_position[1].to_string();

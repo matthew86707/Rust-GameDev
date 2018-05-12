@@ -1,0 +1,1 @@
+/Users/Administrator\ 1/Desktop/Rust-GameDev/QuaternionProject/quaternion/target/debug/quaternion-10254794590c6756.dSYM: /Users/Administrator\ 1/Desktop/Rust-GameDev/QuaternionProject/quaternion/src/Quaternion.rs /Users/Administrator\ 1/Desktop/Rust-GameDev/QuaternionProject/quaternion/src/main.rs

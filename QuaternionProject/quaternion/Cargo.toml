@@ -1,0 +1,7 @@
+[package]
+name = "quaternion"
+version = "0.1.0"
+authors = ["Lucas Baizer <titaniumsapphire32@gmail.com>"]
+
+[dependencies]
+nalgebra = "0.13"
