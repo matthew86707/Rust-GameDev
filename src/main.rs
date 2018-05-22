@@ -62,16 +62,16 @@ fn main() {
 
     let mut collisionTriangles : Vec<Triangle3<f32>> = Vec::new();
 
-   let mut stream = TcpStream::connect("localhost:4242").unwrap();
-    {
-        let mut reader = BufReader::new(&stream);
-        let mut line = String::new();
-        reader.read_line(&mut line);
+   // let mut stream = TcpStream::connect("localhost:4242").unwrap();
+   //  {
+   //      let mut reader = BufReader::new(&stream);
+   //      let mut line = String::new();
+   //      reader.read_line(&mut line);
 
-        println!("World Seed From Server : {}", line);
-        line.pop();
-        world_seed = line.parse::<i32>().unwrap();
-    }
+   //      println!("World Seed From Server : {}", line);
+   //      line.pop();
+   //      world_seed = line.parse::<i32>().unwrap();
+   //  }
 
 	//let shape_terrain = PrimitiveShapes::get_plane(512, 512, world_seed);
     let shape_terrain = PrimitiveShapes::get_sphere(64, 64, true, true, &mut collisionTriangles);
@@ -193,27 +193,28 @@ fn main() {
         //Send light location as TCP packet
         if(glow_effect_multiplier > 0.0){
         println!("{}", to_send_string);
-        let _ = stream.write(to_send_string.as_bytes());
-        stream.flush();
-        }else{
-            let failed_string = "NA\n".to_string();
-            println!("{}", failed_string);
-            let _ = stream.write(failed_string.as_bytes());
-            stream.flush();
-        }
+       
+        // let _ = stream.write(to_send_string.as_bytes());
+        // stream.flush();
+        // }else{
+        //     let failed_string = "NA\n".to_string();
+        //     println!("{}", failed_string);
+        //     let _ = stream.write(failed_string.as_bytes());
+        //     stream.flush();
+        // }
 
         }
 
         //Read player data
-        {
-        let mut reader = BufReader::new(&stream);
-        let mut line = String::new();
-        reader.read_line(&mut line);
+        // {
+        // let mut reader = BufReader::new(&stream);
+        // let mut line = String::new();
+        // reader.read_line(&mut line);
 
-        line.pop();
+        // line.pop();
 
-        let mut data : Vec<&str> = Vec::new(); 
-        data = line.split(":").collect::<Vec<&str>>();;
+        // let mut data : Vec<&str> = Vec::new(); 
+        // data = line.split(":").collect::<Vec<&str>>();;
 
         // if(player_objects.len() < (data.len() / 4)){
         //     println!("Adding Player...");
@@ -222,14 +223,14 @@ fn main() {
         // }
         // }
         
-        if(data.len() > 3){
-            if(data.get(3).unwrap().parse::<f32>().unwrap() == 1.0){
-            glow_effect_multiplier = 1.0;
-            glow_position[0] = data.get(0).unwrap().parse::<f32>().unwrap();
-            glow_position[1] = data.get(1).unwrap().parse::<f32>().unwrap();
-            glow_position[2] = data.get(2).unwrap().parse::<f32>().unwrap();
-            }
-        }
+        // if(data.len() > 3){
+        //     if(data.get(3).unwrap().parse::<f32>().unwrap() == 1.0){
+        //     glow_effect_multiplier = 1.0;
+        //     glow_position[0] = data.get(0).unwrap().parse::<f32>().unwrap();
+        //     glow_position[1] = data.get(1).unwrap().parse::<f32>().unwrap();
+        //     glow_position[2] = data.get(2).unwrap().parse::<f32>().unwrap();
+        //     }
+        // }
 
         // for i in 0..(data.len() / 4)  {
         //     let mut player = &mut player_objects.get_mut(i).unwrap();
@@ -271,7 +272,7 @@ fn main() {
 
         for gameObject in &mut game_objects{
             gameObject.recalculateMatrix();
-            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! {light_position : light_pos, glowPosition : glow_position, shading_intensity : shading_intensity, time : program_counter, sampler: gameObject.texture, snowSampler : &snow_texture,rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true), glowEffect : 1.0, light_location : light_y},
+            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! {light_position : light_pos, glowPosition : glow_position, shading_intensity : shading_intensity, time : program_counter, sampler: gameObject.texture, snowSampler : &snow_texture,rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true), glowEffect : 1.0 as f32, light_location : light_y},
             &draw_params).unwrap();
 
         }

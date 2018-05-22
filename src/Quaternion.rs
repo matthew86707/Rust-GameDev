@@ -11,10 +11,12 @@ pub struct Quaternion {
 
 impl Quaternion {
     pub fn identity() -> Quaternion {
+        Quaternion {
         x : 0.0,
         y : 0.0,
         z : 0.0,
         w : 1.0
+        }
     }
 
     pub fn from_euler_angles(roll: f32, pitch: f32, yaw: f32) -> Quaternion {
