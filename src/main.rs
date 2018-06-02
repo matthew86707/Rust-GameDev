@@ -293,8 +293,7 @@ fn main() {
                     dy = my - position.1;
                     mx = position.0;
                     my = position.1;
-                    mainCam.rotate(nalgebra::Vector3::new(0.0, 0.0, (dx as f32 / 3.0)));
-                    mainCam.rotate(nalgebra::Vector3::new(0.0, (dy as f32 / 3.0), 0.0));
+                    mainCam.rotate(nalgebra::Vector3::new(0.0, (dx as f32 / 30.0), (dy as f32 / 30.0)));
                 },
                 glutin::WindowEvent::MouseInput {button, ..} => {
             let mut toi : f32 = std::f32::MAX;

@@ -5,9 +5,11 @@ extern crate nalgebra;
 const NEAR_PLANE: f32 = 0.1;
 const FAR_PLANE : f32 = 10000.0;
 
+use Quaternion::Quaternion;
+
 pub struct Camera{
 	
-	pub rotation: nalgebra::Vector3<f32>,
+	pub rotation: Quaternion,
 	pub position: nalgebra::Vector3<f32>,
 	pub transform: [[f32; 4]; 4],
     pub rotation_scale : f32,
@@ -29,7 +31,7 @@ impl Camera{
 		Camera{
 			
 			position: nalgebra::Vector3::new(0.0, 0.0, 0.0),
-			rotation: nalgebra::Vector3::new(0.0, 0.0, 0.0),
+			rotation: Quaternion::identity(),
 			transform : transform,
             current_velocity : nalgebra::Vector3::new(0.0, 0.0, 0.0),
             rotation_scale : 1.0
@@ -53,7 +55,16 @@ impl Camera{
     }
 
 	pub fn rotate(&mut self, rotation: nalgebra::Vector3<f32>) {
-		self.rotation += rotation;
+        let mut rotation_x = Quaternion::from_axis_angle(0.0, 0.0, 1.0, rotation.x);
+        let mut rotation_y = Quaternion::from_axis_angle(0.0, 1.0, 0.0, rotation.y);
+
+        let mut v = Vector3::new(1.0, 0.0, 0.0);
+        v = rotation_y.transform_vector(v);
+        let mut rotation_z = Quaternion::from_axis_angle(v.x, v.y, v.z, rotation.z);
+        
+		
+        self.rotation *= rotation_y;
+        self.rotation *= rotation_z;
 	}
 
 	pub fn get_view_matrix(&self, should_translate : bool) -> [[f32; 4]; 4] {
@@ -69,28 +80,7 @@ impl Camera{
 
         }
 
-        let mut rotation_matrix_z: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
-        let mut rotation_matrix_y: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
-        let mut rotation_matrix_x: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
-
-        rotation_matrix_z[(0, 0)] = f32::cos(f32::to_radians(self.rotation[2]));
-        rotation_matrix_z[(2, 0)] = f32::sin(f32::to_radians(self.rotation[2]));
-        rotation_matrix_z[(0, 2)] = -f32::sin(f32::to_radians(self.rotation[2]));
-        rotation_matrix_z[(2, 2)] = f32::cos(f32::to_radians(self.rotation[2]));
-
-        rotation_matrix_y[(1, 1)] = f32::cos(f32::to_radians(self.rotation[1]));
-        rotation_matrix_y[(1, 2)] = f32::sin(f32::to_radians(self.rotation[1]));
-        rotation_matrix_y[(2, 1)] = -f32::sin(f32::to_radians(self.rotation[1]));
-        rotation_matrix_y[(2, 2)] = f32::cos(f32::to_radians(self.rotation[1]));
-
-        rotation_matrix_x[(0, 0)] = f32::cos(f32::to_radians(self.rotation[0]));
-        rotation_matrix_x[(0, 1)] = f32::sin(f32::to_radians(self.rotation[0]));
-        rotation_matrix_x[(1, 0)] = -f32::sin(f32::to_radians(self.rotation[0]));
-        rotation_matrix_x[(1, 1)] = f32::cos(f32::to_radians(self.rotation[0]));
-
-        
-       ((translation_matrix) * ((rotation_matrix_z * rotation_matrix_y * rotation_matrix_x))).into()
-        
+       ((translation_matrix) * self.rotation.into_matrix()).into()      
         
 	}
 
@@ -106,22 +96,7 @@ impl Camera{
         let mut rotation_matrix_y: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
         let mut rotation_matrix_x: nalgebra::Matrix4<f32> = nalgebra::Matrix4::new(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 
-        rotation_matrix_z[(0, 0)] = f32::cos(f32::to_radians(self.rotation[2]));
-        rotation_matrix_z[(2, 0)] = f32::sin(f32::to_radians(self.rotation[2]));
-        rotation_matrix_z[(0, 2)] = -f32::sin(f32::to_radians(self.rotation[2]));
-        rotation_matrix_z[(2, 2)] = f32::cos(f32::to_radians(self.rotation[2]));
-
-        rotation_matrix_y[(1, 1)] = f32::cos(f32::to_radians(self.rotation[1]));
-        rotation_matrix_y[(1, 2)] = f32::sin(f32::to_radians(self.rotation[1]));
-        rotation_matrix_y[(2, 1)] = -f32::sin(f32::to_radians(self.rotation[1]));
-        rotation_matrix_y[(2, 2)] = f32::cos(f32::to_radians(self.rotation[1]));
-
-        rotation_matrix_x[(0, 0)] = f32::cos(f32::to_radians(self.rotation[0]));
-        rotation_matrix_x[(0, 1)] = f32::sin(f32::to_radians(self.rotation[0]));
-        rotation_matrix_x[(1, 0)] = -f32::sin(f32::to_radians(self.rotation[0]));
-        rotation_matrix_x[(1, 1)] = f32::cos(f32::to_radians(self.rotation[0]));
-
-        (translation_matrix) * (rotation_matrix_z * rotation_matrix_y * rotation_matrix_x)
+        (translation_matrix) * self.rotation.into_matrix()
     }
 
     pub fn forward(&self) -> nalgebra::Vector3<f32> {

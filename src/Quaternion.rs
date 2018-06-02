@@ -19,24 +19,83 @@ impl Quaternion {
         }
     }
 
+    pub fn get_conjugate(&self) -> Quaternion {
+         let v_quat = Quaternion {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+            w: 0.0,
+        }
+    }
+
+    pub fn transform_vector(self, v: nalgebra::Vector3<f32>) -> nalgerba::Vector3<f32> {
+        let v_quat = Quaternion {
+            x: v.x,
+            y: v.y,
+            z: v.z,
+            w: 0.0,
+        };
+        let q = self * v_quat * self.get_conjugate();
+        Vector3::new(q.x, q.y, q.z)
+    }
+
     pub fn from_euler_angles(roll: f32, pitch: f32, yaw: f32) -> Quaternion {
-        unimplemented!()
+        use std::f32;
+        Quaternion {
+            w : f32::cos(roll / 2.0) * f32::cos(pitch / 2.0) * f32::cos(yaw / 2.0) + f32::sin(roll / 2.0) * f32::sin(pitch / 2.0) * f32::sin(yaw / 2.0),
+            z : f32::sin(roll / 2.0) * f32::cos(pitch / 2.0) * f32::cos(yaw / 2.0) - f32::cos(roll / 2.0) * f32::sin(pitch / 2.0) * f32::sin(yaw / 2.0),
+            x : f32::cos(roll / 2.0) * f32::sin(pitch / 2.0) * f32::cos(yaw / 2.0) + f32::sin(roll / 2.0) * f32::cos(pitch / 2.0) * f32::sin(yaw / 2.0),
+            y : f32::cos(roll / 2.0) * f32::cos(pitch / 2.0) * f32::sin(yaw / 2.0) - f32::sin(roll / 2.0) * f32::sin(pitch / 2.0) * f32::cos(yaw / 2.0)
+        }
     }
 
     pub fn from_axis_angle(x: f32, y: f32, z: f32, angle: f32) -> Quaternion {
-        unimplemented!()
+        Quaternion {
+            x : x * f32::sin(angle / 2.0),
+            y : y * f32::sin(angle / 2.0),
+            z : z * f32::sin(angle / 2.0),
+            w : f32::cos(angle / 2.0)
+        }
     }
        
     pub fn len(&self) -> f32 {
-        unimplemented!()
+        use std::f32;
+        return (self.x.powf(2.0) + self.y.powf(2.0) + self.z.powf(2.0) + self.w.powf(2.0)).sqrt();
     }
     
     pub fn normalize(&mut self) {
-        unimplemented!()
+        let mut length : f32 = self.len();
+        self.x = self.x / length;
+        self.y = self.y / length;
+        self.z = self.z / length;
+        self.w = self.w / length;
     }
 
     pub fn into_matrix(self) -> nalgebra::core::Matrix4<f32> {
-        unimplemented!()
+        use std::f32;
+        let mut matrix_array : [[f32; 4];4] = [[0.0; 4];4];
+        let w = self.w;
+        let x = self.x;
+        let y = self.y;
+        let z = self.z;
+
+        matrix_array[0][0] = 1.0 - 2.0 * y.powf(2.0) - 2.0 * z.powf(2.0);
+        matrix_array[1][1] = 1.0 - 2.0 * x.powf(2.0) - 2.0 * z.powf(2.0);
+        matrix_array[2][2] = 1.0 - 2.0 * x.powf(2.0) - 2.0 * y.powf(2.0);
+
+        matrix_array[1][0] = 2.0 * x * y - 2.0 * z * w;
+        matrix_array[2][0] = 2.0 * x * z + 2.0 * y * w;
+
+        matrix_array[0][1] = 2.0 * x * y + 2.0 * z * w;
+        matrix_array[2][1] = 2.0 * y * z - 2.0 * x * w;
+
+        matrix_array[0][2] = 2.0 * x * z - 2.0 * y * w;
+        matrix_array[1][2] = 2.0 * y * z + 2.0 * x * w;
+
+        matrix_array[3][3] = 1.0;
+
+        return matrix_array.into();
+    
     }
 
     pub fn slerp(&self, dst: Quaternion, t: f32) -> Quaternion {
@@ -48,13 +107,26 @@ impl ops::Mul<Quaternion> for Quaternion {
     type Output = Quaternion;
 
     fn mul(self, rhs: Quaternion) -> Quaternion {
-        unimplemented!()
+        let mut q = Quaternion {
+            w : (rhs.w * self.w - rhs.x * self.x - rhs.y * self.y - rhs.z * self.z),
+            x : (rhs.w * self.x + rhs.x * self.w - rhs.y * self.z + rhs.z * self.y),
+            y : (rhs.w * self.y + rhs.x * self.w + rhs.y * self.w - rhs.z * self.x),
+            z : (rhs.w * self.z - rhs.x * self.y + rhs.y * self.x + rhs.z * self.w)
+        };
+        q.normalize();
+        return q;
     }
 }
 
 impl ops::MulAssign<Quaternion> for Quaternion {
     fn mul_assign(&mut self, rhs: Quaternion) {
-        unimplemented!()
+        *self = Quaternion {
+            w : (rhs.w * self.w - rhs.x * self.x - rhs.y * self.y - rhs.z * self.z),
+            x : (rhs.w * self.x + rhs.x * self.w - rhs.y * self.z + rhs.z * self.y),
+            y : (rhs.w * self.y + rhs.x * self.w + rhs.y * self.w - rhs.z * self.x),
+            z : (rhs.w * self.z - rhs.x * self.y + rhs.y * self.x + rhs.z * self.w)
+        };
+        self.normalize();
     }
 }
 
