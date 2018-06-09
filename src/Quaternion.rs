@@ -1,5 +1,6 @@
 use std::ops;
-use nalgebra;
+use ::nalgebra;
+use ::nalgebra::Vector3;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Quaternion {
@@ -24,11 +25,12 @@ impl Quaternion {
             x: -self.x,
             y: -self.y,
             z: -self.z,
-            w: 0.0,
-        }
+            w: 0.0
+        };
+        v_quat
     }
 
-    pub fn transform_vector(self, v: nalgebra::Vector3<f32>) -> nalgerba::Vector3<f32> {
+    pub fn transform_vector(self, v: Vector3<f32>) -> Vector3<f32> {
         let v_quat = Quaternion {
             x: v.x,
             y: v.y,
@@ -41,11 +43,18 @@ impl Quaternion {
 
     pub fn from_euler_angles(roll: f32, pitch: f32, yaw: f32) -> Quaternion {
         use std::f32;
+        let mut cy : f32 = f32::cos(yaw * 0.5);
+	    let mut sy : f32 = f32::sin(yaw * 0.5);
+	    let mut cr : f32 = f32::cos(roll * 0.5);
+	    let mut sr : f32 = f32::sin(roll * 0.5);
+	    let mut cp : f32 = f32::cos(pitch * 0.5);
+	    let mut sp : f32 = f32::sin(pitch * 0.5);
+
         Quaternion {
-            w : f32::cos(roll / 2.0) * f32::cos(pitch / 2.0) * f32::cos(yaw / 2.0) + f32::sin(roll / 2.0) * f32::sin(pitch / 2.0) * f32::sin(yaw / 2.0),
-            z : f32::sin(roll / 2.0) * f32::cos(pitch / 2.0) * f32::cos(yaw / 2.0) - f32::cos(roll / 2.0) * f32::sin(pitch / 2.0) * f32::sin(yaw / 2.0),
-            x : f32::cos(roll / 2.0) * f32::sin(pitch / 2.0) * f32::cos(yaw / 2.0) + f32::sin(roll / 2.0) * f32::cos(pitch / 2.0) * f32::sin(yaw / 2.0),
-            y : f32::cos(roll / 2.0) * f32::cos(pitch / 2.0) * f32::sin(yaw / 2.0) - f32::sin(roll / 2.0) * f32::sin(pitch / 2.0) * f32::cos(yaw / 2.0)
+            w : cy * cr * cp + sy * sr * sp,
+            z : cy * sr * cp - sy * cr * sp,
+            x : cy * cr * sp + sy * sr * cp,
+            y : sy * cr * cp - cy * sr * sp
         }
     }
 

@@ -8,7 +8,6 @@ const FAR_PLANE : f32 = 10000.0;
 use Quaternion::Quaternion;
 
 pub struct Camera{
-	
 	pub rotation: Quaternion,
 	pub position: nalgebra::Vector3<f32>,
 	pub transform: [[f32; 4]; 4],
@@ -55,16 +54,12 @@ impl Camera{
     }
 
 	pub fn rotate(&mut self, rotation: nalgebra::Vector3<f32>) {
-        let mut rotation_x = Quaternion::from_axis_angle(0.0, 0.0, 1.0, rotation.x);
-        let mut rotation_y = Quaternion::from_axis_angle(0.0, 1.0, 0.0, rotation.y);
-
-        let mut v = Vector3::new(1.0, 0.0, 0.0);
-        v = rotation_y.transform_vector(v);
-        let mut rotation_z = Quaternion::from_axis_angle(v.x, v.y, v.z, rotation.z);
-        
-		
-        self.rotation *= rotation_y;
-        self.rotation *= rotation_z;
+        use ::nalgebra::Vector3;
+        let up : Vector3<f32> = self.up();
+        let right : Vector3<f32> = self.right();
+        let mut q1 = Quaternion::from_axis_angle(0.0, 1.0, 0.0, rotation.y);
+        let mut q2 = Quaternion::from_axis_angle(1.0, 0.0, 0.0, rotation.z);
+        self.rotation = self.rotation * q1 * q2;
 	}
 
 	pub fn get_view_matrix(&self, should_translate : bool) -> [[f32; 4]; 4] {
@@ -101,6 +96,13 @@ impl Camera{
 
     pub fn forward(&self) -> nalgebra::Vector3<f32> {
         let mut point = nalgebra::Vector4::new(0.0, 0.0, -1.0, 0.0);
+        point = self.get_view_matrix_as_matrix() * point;
+
+        nalgebra::Vector3::new(point[0], point[1], point[2])
+    }
+
+     pub fn up(&self) -> nalgebra::Vector3<f32> {
+        let mut point = nalgebra::Vector4::new(0.0, 1.0, 0.0, 0.0);
         point = self.get_view_matrix_as_matrix() * point;
 
         nalgebra::Vector3::new(point[0], point[1], point[2])
