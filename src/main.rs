@@ -5,6 +5,7 @@ extern crate nalgebra;
 extern crate rand;
 extern crate noise;
 extern crate ncollide;
+extern crate glium_text;
 
 mod GameObject;
 mod Camera;
@@ -13,6 +14,9 @@ mod UIElement;
 mod Quaternion;
 
 use glium::{glutin, Surface};
+use glium::backend::Facade;
+use glium::Display;
+
 use std::io::Cursor;
 use std::fs::File;
 use std::io::prelude::*;
@@ -170,7 +174,40 @@ fn main() {
    let mut light_pos : [f32; 3] = [0.0, 135.0, -5.0];
    let light_radius : f32 = 100.0;
     glow_effect_multiplier = 0.0;
+
+    use std::time::{Instant, Duration};
+
+    let mut delta_time : f32;
+
+    let mut just_past = Instant::now();
+
+    // The `TextSystem` contains the shaders and elements used for text display.
+    let system = glium_text::TextSystem::new(&display);
+
+    // Creating a `FontTexture`, which a regular `Texture` which contains the font.
+    // Note that loading the systems fonts is not covered by this library.
+    let font = glium_text::FontTexture::new(&display, std::fs::File::open(&std::path::Path::new("NotoSans-Regular.ttf")).unwrap(), 24).unwrap();
+
+    // Creating a `TextDisplay` which contains the elements required to draw a specific sentence.
+    let text = glium_text::TextDisplay::new(&system, &font, "Hello world!");
+
+    // Finally, drawing the text is done like this:
+    let matrix = [[0.2, 0.0, 0.0, -0.9],
+              [0.0, 0.2, 0.0, 0.0],
+              [0.0, 0.0, 1.0, 0.0],
+              [0.0, 0.0, 0.0, 1.0]];
+    
     while !closed {
+        //Time control code
+        let mut new_now = Instant::now();
+        let delta_duration = new_now.duration_since(just_past);
+        just_past = new_now;
+
+        delta_time = delta_duration.as_secs() as f32 + (delta_duration.subsec_nanos() as f32 * 10e-9);
+        println!("Delta Time {}", delta_time);
+
+        let text = glium_text::TextDisplay::new(&system, &font, &delta_time.to_string());
+
         counter = counter + 1;
         let mut vision_ray = Ray::<Point3<f32>> {
             origin : Point3::from_coordinates(mainCam.position),
@@ -280,6 +317,8 @@ fn main() {
         water.recalculateMatrix();
         target.draw(water.vertex_buffer, &indices, water.program, &uniform! {light_position : light_pos, sampler: water.texture, transform: water.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
             &draw_params).unwrap();
+
+       glium_text::draw(&text, &system, &mut target, matrix, (1.0, 1.0, 0.0, 1.0));
        
         target.finish().unwrap();
 

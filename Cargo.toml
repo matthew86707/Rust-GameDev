@@ -4,9 +4,10 @@ version = "0.1.0"
 authors = ["Lucas Baizer"]
 
 [dependencies]
-glium = "*"
+glium = "0.21"
 image = "*"
 nalgebra = "0.13"
 rand = "0.3"
 noise = "0.4.1"
 ncollide = "0.13"
+glium_text = "0.12"
