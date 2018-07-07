@@ -97,6 +97,16 @@ fn main() {
 
     let vertex_buffer_player = glium::VertexBuffer::new(&display, &vec![vertex1, vertex2, vertex3, vertex4, vertex5, vertex6]).unwrap();
 
+    let vertex1 = Vertex { position: [-1.0, -1.0, -0.5], uv: [ 0.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
+    let vertex2 = Vertex { position: [ 1.0, -1.0, -0.5], uv: [ 1.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
+    let vertex3 = Vertex { position: [ -1.0, 1.0, -0.5], uv: [ 0.0, 0.0 ], normal: [0.0, 0.0, 0.0] };
+
+    let vertex4 = Vertex { position: [1.0, 1.0, -0.5], uv: [ 1.0, 0.0], normal: [0.0, 0.0, 0.0] };
+    let vertex5 = Vertex { position: [ -1.0, 1.0, -0.5], uv: [ 0.0, 0.0], normal: [0.0, 0.0, 0.0] };
+    let vertex6 = Vertex { position: [ 1.0, -1.0, -0.5], uv: [ 1.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
+
+    let vertex_buffer_profiler = glium::VertexBuffer::new(&display, &vec![vertex1, vertex2, vertex3, vertex4, vertex5, vertex6]).unwrap();
+
     let mut scale_a : f32 = 500.0;
     let mut scale_b : f32 = 1.0;
 
@@ -114,6 +124,7 @@ fn main() {
     let program_water = create_shader_program("shaders/vertex_water.glsl", "shaders/fragment_water.glsl", &display);
     let program_player = create_shader_program("shaders/vertex_player.glsl", "shaders/fragment_player.glsl", &display);
     let program_UI = create_shader_program("shaders/vertex_ui.glsl", "shaders/fragment_ui.glsl", &display);
+    let program_profiler = create_shader_program("shaders/vertex_profiler.glsl", "shaders/fragment_profiler.glsl", &display);
     let program_skybox = create_shader_program("shaders/vertex_skybox.glsl", "shaders/fragment_skybox.glsl", &display);
 
 
@@ -127,6 +138,8 @@ fn main() {
     let mut test_object : GameObject = GameObject::new(Shape::Plane, &texture, &program, &vertex_buffer_terrain);
 
     let mut water : GameObject = GameObject::new(Shape::Plane, &water_texture, &program_water, &vertex_buffer_water);
+
+    let mut profiler : GameObject = GameObject::new(Shape::Plane, &water_texture, &program_profiler, &vertex_buffer_profiler);
 
     let mut player_objects : Vec<GameObject> = Vec::new();
 
@@ -177,7 +190,7 @@ fn main() {
 
     use std::time::{Instant, Duration};
 
-    let mut delta_time : f32;
+    let mut delta_time : f64;
 
     let mut just_past = Instant::now();
 
@@ -186,27 +199,33 @@ fn main() {
 
     // Creating a `FontTexture`, which a regular `Texture` which contains the font.
     // Note that loading the systems fonts is not covered by this library.
-    let font = glium_text::FontTexture::new(&display, std::fs::File::open(&std::path::Path::new("NotoSans-Regular.ttf")).unwrap(), 24).unwrap();
+    let font = glium_text::FontTexture::new(&display, std::fs::File::open(&std::path::Path::new("NotoSans-Regular.ttf")).unwrap(), 64).unwrap();
 
     // Creating a `TextDisplay` which contains the elements required to draw a specific sentence.
     let text = glium_text::TextDisplay::new(&system, &font, "Hello world!");
 
     // Finally, drawing the text is done like this:
-    let matrix = [[0.2, 0.0, 0.0, -0.9],
+    let matrix = [[0.2, 0.0, 0.0, 0.0],
               [0.0, 0.2, 0.0, 0.0],
               [0.0, 0.0, 1.0, 0.0],
-              [0.0, 0.0, 0.0, 1.0]];
+              [-0.9, 0.0, 0.0, 1.0]];
+
+    let mut frames_past : i32 = 0;
+    let mut time_elapsed : f32 = 0.0;
     
     while !closed {
         //Time control code
+        //let mut 
         let mut new_now = Instant::now();
         let delta_duration = new_now.duration_since(just_past);
         just_past = new_now;
 
-        delta_time = delta_duration.as_secs() as f32 + (delta_duration.subsec_nanos() as f32 * 10e-9);
-        println!("Delta Time {}", delta_time);
+        delta_time = delta_duration.as_secs() as f64 + (delta_duration.subsec_nanos() as f64 * 10e-9);
+        //println!("Delta Time Nano {}", delta_duration.subsec_nanos());
 
-        let text = glium_text::TextDisplay::new(&system, &font, &delta_time.to_string());
+        let fps = 1.0 / delta_time;
+
+        let text = glium_text::TextDisplay::new(&system, &font, &fps.to_string());
 
         counter = counter + 1;
         let mut vision_ray = Ray::<Point3<f32>> {
@@ -220,7 +239,7 @@ fn main() {
         //Handle networking
 
         {
-        println!("Getting light pos");
+        //println!("Getting light pos");
         //Format player position
         let position_x_string = glow_position[0].to_string();
         let position_y_string = glow_position[1].to_string();
@@ -229,7 +248,7 @@ fn main() {
 
         //Send light location as TCP packet
         if(glow_effect_multiplier > 0.0){
-        println!("{}", to_send_string);
+        //println!("{}", to_send_string);
        
         // let _ = stream.write(to_send_string.as_bytes());
         // stream.flush();
@@ -318,9 +337,15 @@ fn main() {
         target.draw(water.vertex_buffer, &indices, water.program, &uniform! {light_position : light_pos, sampler: water.texture, transform: water.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
             &draw_params).unwrap();
 
+        target.draw(profiler.vertex_buffer, &indices, profiler.program, &uniform! {time_passed : program_counter},
+            &draw_params).unwrap();
+
        glium_text::draw(&text, &system, &mut target, matrix, (1.0, 1.0, 0.0, 1.0));
        
         target.finish().unwrap();
+
+        let mut very_new_now = Instant::now();
+        //println!("Time since top of game loop : {}", very_new_now.duration_since(new_now).subsec_nanos());
 
         events_loop.poll_events(|ev| {
             
