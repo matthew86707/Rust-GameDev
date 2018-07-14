@@ -97,13 +97,15 @@ fn main() {
 
     let vertex_buffer_player = glium::VertexBuffer::new(&display, &vec![vertex1, vertex2, vertex3, vertex4, vertex5, vertex6]).unwrap();
 
-    let vertex1 = Vertex { position: [-1.0, -1.0, -0.5], uv: [ 0.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
-    let vertex2 = Vertex { position: [ 1.0, -1.0, -0.5], uv: [ 1.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
-    let vertex3 = Vertex { position: [ -1.0, 1.0, -0.5], uv: [ 0.0, 0.0 ], normal: [0.0, 0.0, 0.0] };
+    let aspect_ratio : f32 = display.get_framebuffer_dimensions().0 as f32 / display.get_framebuffer_dimensions().1 as f32;
 
-    let vertex4 = Vertex { position: [1.0, 1.0, -0.5], uv: [ 1.0, 0.0], normal: [0.0, 0.0, 0.0] };
-    let vertex5 = Vertex { position: [ -1.0, 1.0, -0.5], uv: [ 0.0, 0.0], normal: [0.0, 0.0, 0.0] };
-    let vertex6 = Vertex { position: [ 1.0, -1.0, -0.5], uv: [ 1.0, 1.0 ], normal: [0.0, 0.0, 0.0] };
+    let vertex1 = Vertex { position: [-1.0, -1.0, -0.5], uv: [ -aspect_ratio, 1.0 ], normal: [0.0, 0.0, 0.0] };
+    let vertex2 = Vertex { position: [ 1.0, -1.0, -0.5], uv: [ aspect_ratio, 1.0 ], normal: [0.0, 0.0, 0.0] };
+    let vertex3 = Vertex { position: [ -1.0, 1.0, -0.5], uv: [ -aspect_ratio, -1.0 ], normal: [0.0, 0.0, 0.0] };
+
+    let vertex4 = Vertex { position: [1.0, 1.0, -0.5], uv: [ aspect_ratio, -1.0], normal: [0.0, 0.0, 0.0] };
+    let vertex5 = Vertex { position: [ -1.0, 1.0, -0.5], uv: [ -aspect_ratio, -1.0], normal: [0.0, 0.0, 0.0] };
+    let vertex6 = Vertex { position: [ 1.0, -1.0, -0.5], uv: [ aspect_ratio, 1.0 ], normal: [0.0, 0.0, 0.0] };
 
     let vertex_buffer_profiler = glium::VertexBuffer::new(&display, &vec![vertex1, vertex2, vertex3, vertex4, vertex5, vertex6]).unwrap();
 
@@ -153,6 +155,7 @@ fn main() {
     let mut my : f64 = 0.0;
     let mut dx : f64 = 0.0;
     let mut dy : f64 = 0.0;
+    let mut mouseScroll : f32 = 0.0;
 
     let mut draw_params : glium::draw_parameters::DrawParameters = Default::default();
     draw_params.polygon_mode = glium::draw_parameters::PolygonMode::Fill;
@@ -337,29 +340,33 @@ fn main() {
         target.draw(water.vertex_buffer, &indices, water.program, &uniform! {light_position : light_pos, sampler: water.texture, transform: water.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
             &draw_params).unwrap();
 
-        target.draw(profiler.vertex_buffer, &indices, profiler.program, &uniform! {time_passed : program_counter},
+        target.draw(profiler.vertex_buffer, &indices, profiler.program, &uniform! {time_passed : program_counter, mouseX : mx as f32 / screen_size.0 as f32, mouseY : my as f32 / screen_size.1 as f32, zoom_uniform : (1.0 + mouseScroll) * 0.01},
             &draw_params).unwrap();
 
-       glium_text::draw(&text, &system, &mut target, matrix, (1.0, 1.0, 0.0, 1.0));
+       //glium_text::draw(&text, &system, &mut target, matrix, (1.0, 1.0, 0.0, 1.0));
        
         target.finish().unwrap();
 
         let mut very_new_now = Instant::now();
         //println!("Time since top of game loop : {}", very_new_now.duration_since(new_now).subsec_nanos());
-
+        use glium::glutin::MouseScrollDelta;
         events_loop.poll_events(|ev| {
             
             match ev {
 
                 glutin::Event::WindowEvent { event, .. } => match event {
                     glutin::WindowEvent::CursorMoved{position, ..} => {
-                    dx = mx - position.0;
-                    dy = my - position.1;
-                    mx = position.0;
-                    my = position.1;
-                    mainCam.rotate(nalgebra::Vector3::new(0.0, (dy as f32 / 30.0), -(dx as f32 / 30.0)));
-                    //mainCam.rotate(nalgebra::Vector3::new(0.0, (dx as f32 / 30.0), 0.0));
-                },
+                        dx = mx - position.0;
+                        dy = my - position.1;
+                        mx = position.0;
+                        my = position.1;
+                        mainCam.rotate(nalgebra::Vector3::new(0.0, (dy as f32 / 30.0), -(dx as f32 / 30.0)));
+                        //mainCam.rotate(nalgebra::Vector3::new(0.0, (dx as f32 / 30.0), 0.0));
+                    },
+                    glutin::WindowEvent::MouseWheel { delta: MouseScrollDelta::LineDelta(x, y), .. } => {
+                        mouseScroll = mouseScroll + y;
+                        println!("Scrolled!");
+                    },
                 glutin::WindowEvent::MouseInput {button, ..} => {
             let mut toi : f32 = std::f32::MAX;
             for i in 0..8000 as usize {
