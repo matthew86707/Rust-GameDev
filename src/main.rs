@@ -364,7 +364,7 @@ fn main() {
                         //mainCam.rotate(nalgebra::Vector3::new(0.0, (dx as f32 / 30.0), 0.0));
                     },
                     glutin::WindowEvent::MouseWheel { delta: MouseScrollDelta::LineDelta(x, y), .. } => {
-                        mouseScroll = mouseScroll + y;
+                        mouseScroll = mouseScroll / y as f32;
                         println!("Scrolled!");
                     },
                 glutin::WindowEvent::MouseInput {button, ..} => {
