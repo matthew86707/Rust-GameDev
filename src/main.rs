@@ -12,10 +12,13 @@ mod Camera;
 mod PrimitiveShapes;
 mod UIElement;
 mod Quaternion;
+mod particle;
 
 use glium::{glutin, Surface};
 use glium::backend::Facade;
 use glium::Display;
+
+use particle::Particle;
 
 use std::io::Cursor;
 use std::fs::File;
@@ -66,18 +69,6 @@ fn main() {
 
     let mut collisionTriangles : Vec<Triangle3<f32>> = Vec::new();
 
-   // let mut stream = TcpStream::connect("localhost:4242").unwrap();
-   //  {
-   //      let mut reader = BufReader::new(&stream);
-   //      let mut line = String::new();
-   //      reader.read_line(&mut line);
-
-   //      println!("World Seed From Server : {}", line);
-   //      line.pop();
-   //      world_seed = line.parse::<i32>().unwrap();
-   //  }
-
-	//let shape_terrain = PrimitiveShapes::get_plane(512, 512, world_seed);
     let shape_terrain = PrimitiveShapes::get_sphere(64, 64, true, true, &mut collisionTriangles);
     let shape_water = PrimitiveShapes::get_sphere(64, 64, false, false, &mut collisionTriangles);
 	let vertex_buffer_terrain = glium::VertexBuffer::new(&display, &shape_terrain).unwrap();
@@ -137,6 +128,8 @@ fn main() {
 
     let mut game_objects : Vec<GameObject> = Vec::new();
 
+    let mut game_particles : Vec<Particle> = Vec::new();
+
     let mut test_object : GameObject = GameObject::new(Shape::Plane, &texture, &program, &vertex_buffer_terrain);
 
     let mut water : GameObject = GameObject::new(Shape::Plane, &water_texture, &program_water, &vertex_buffer_water);
@@ -162,7 +155,7 @@ fn main() {
     draw_params.blend =  glium::Blend::alpha_blending();
     draw_params.depth = glium::Depth {
          test: glium::draw_parameters::DepthTest::IfLess,
-               write: true,
+               write: false,
                 .. Default::default()
    };
 
@@ -215,6 +208,13 @@ fn main() {
 
     let mut frames_past : i32 = 0;
     let mut time_elapsed : f32 = 0.0;
+
+    game_particles.push(Particle::new(0.2, 0.2, 1.0));
+    game_particles.push(Particle::new(0.5, -0.9, 1.0));
+    game_particles.push(Particle::new(-1.0, -1.0, 1.0));
+    game_particles.push(Particle::new(-0.2, -0.2, 1.0));
+    game_particles.push(Particle::new(-0.5, 0.9, 1.0));
+    game_particles.push(Particle::new(1.0, 1.0, 1.0));
     
     while !closed {
         //Time control code
@@ -307,41 +307,59 @@ fn main() {
         //debug_ping_object.translate(0.0005, 0.0, 0.0);
 
         let mut target = display.draw();
-        target.clear_color_and_depth((0.25, 0.45, 1.0, 1.0), 1.0);
+        target.clear_color_and_depth((0.0, 0.0, 0.0, 0.0), 1.0);
 
         let projection_matrix: [[f32; 4]; 4] = projection_matrix.into();
 
-        target.draw(&vertex_buffer_skybox, &indices_skybox, &program_skybox, &uniform! {skybox : skybox_sampled, projection_matrix: projection_matrix, view_matrix :  mainCam.get_view_matrix(false)},
-            &draw_params).unwrap();
+        // target.draw(&vertex_buffer_skybox, &indices_skybox, &program_skybox, &uniform! {skybox : skybox_sampled, projection_matrix: projection_matrix, view_matrix :  mainCam.get_view_matrix(false)},
+        //     &draw_params).unwrap();
 
       //  debug_ping_object.recalculateMatrix();
      //   target.draw(debug_ping_object.vertex_buffer, &indices, debug_ping_object.program, &uniform! {time : program_counter, transform: debug_ping_object.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
       //  &draw_params).unwrap();
 
-        if should_spawn {
-            game_objects.push(GameObject::new(Shape::Plane, &texture, &program, &vertex_buffer_terrain));
-            should_spawn = false;
+        // if should_spawn {
+        //     game_objects.push(GameObject::new(Shape::Plane, &texture, &program, &vertex_buffer_terrain));
+        //     should_spawn = false;
+        // }
+
+        // for player in &mut player_objects{
+        //     player.recalculateMatrix();
+        //     target.draw(player.vertex_buffer, &indices, player.program, &uniform! { time : program_counter, transform: player.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
+        //     &draw_params).unwrap();
+        // }
+
+        // for gameObject in &mut game_objects{
+        //     gameObject.recalculateMatrix();
+        //     target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! {light_position : light_pos, glowPosition : glow_position, shading_intensity : shading_intensity, time : program_counter, sampler: gameObject.texture, snowSampler : &snow_texture,rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true), glowEffect : 1.0 as f32, light_location : light_y},
+        //     &draw_params).unwrap();
+
+        // }
+    
+        for i in 0..game_particles.len(){
+            target.draw(profiler.vertex_buffer, &indices, profiler.program, &uniform! {x : game_particles[i].x, y : game_particles[i].y, time_passed : program_counter},
+              &draw_params).unwrap();
+              let mut delta_x : f32 = 0.0;
+              let mut delta_y : f32 = 0.0;
+                //Calculate forces
+                for j in 0..game_particles.len(){
+                    if i != j {
+                    let mut dx : f32 = game_particles[j].x - game_particles[i].x;
+                    let mut dy : f32 = game_particles[j].y - game_particles[i].y;
+                    let mut distance : f32 = f32::sqrt(dx * dx + dy * dy);
+                    let mut acceleration : f32 = 0.00001 * game_particles[j].mass / distance.powi(2);
+                    let mut travel_x_normal : f32 = dx / distance;
+                    let mut travel_y_normal : f32 = dy / distance;
+                    delta_x += travel_x_normal * acceleration;
+                    delta_y += travel_y_normal * acceleration;
+                    }
+                }
+              game_particles[i].translate(delta_x, delta_y);
         }
 
-        for player in &mut player_objects{
-            player.recalculateMatrix();
-            target.draw(player.vertex_buffer, &indices, player.program, &uniform! { time : program_counter, transform: player.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
-            &draw_params).unwrap();
-        }
-
-        for gameObject in &mut game_objects{
-            gameObject.recalculateMatrix();
-            target.draw(gameObject.vertex_buffer, &indices, gameObject.program, &uniform! {light_position : light_pos, glowPosition : glow_position, shading_intensity : shading_intensity, time : program_counter, sampler: gameObject.texture, snowSampler : &snow_texture,rockSampler : &texture_rock, transform: gameObject.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true), glowEffect : 1.0 as f32, light_location : light_y},
-            &draw_params).unwrap();
-
-        }
-
-        water.recalculateMatrix();
-        target.draw(water.vertex_buffer, &indices, water.program, &uniform! {light_position : light_pos, sampler: water.texture, transform: water.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
-            &draw_params).unwrap();
-
-        target.draw(profiler.vertex_buffer, &indices, profiler.program, &uniform! {time_passed : program_counter, mouseX : mx as f32 / screen_size.0 as f32, mouseY : my as f32 / screen_size.1 as f32, zoom_uniform : (1.0 + mouseScroll) * 0.01},
-            &draw_params).unwrap();
+        // water.recalculateMatrix();
+        // target.draw(water.vertex_buffer, &indices, water.program, &uniform! {light_position : light_pos, sampler: water.texture, transform: water.transform, projection_matrix: projection_matrix, view_matrix : mainCam.get_view_matrix(true)},
+        //     &draw_params).unwrap();
 
        //glium_text::draw(&text, &system, &mut target, matrix, (1.0, 1.0, 0.0, 1.0));
        

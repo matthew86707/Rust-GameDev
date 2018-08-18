@@ -10,6 +10,6 @@ uniform float mouseX;
 uniform float mouseY;
 
 void main() {
-    fragment_uv = vec2(-mouseX + uv.x * zoom_uniform, -mouseY + uv.y * zoom_uniform);
+    fragment_uv = uv;
     gl_Position = vec4(position, 1);
 }
